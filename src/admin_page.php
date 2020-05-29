@@ -1,5 +1,5 @@
 <?php
-/* 
+/*
 admin_page.php
 
 - Instructor UI
@@ -30,9 +30,9 @@ Initially displays courses view. This view displays an instructors saved courses
 
 	// if neither course nor game in query string, show courses view
 	// call func from sql_settup to get the instructor's saved courses
-	if (!isset($_GET['course']) && !isset($_GET['game']))	
+	if (!isset($_GET['course']) && !isset($_GET['game']))
 		$courses = getCourses($USER->email);
-	
+
 	// if course in query string, show games view
 	// get current course name using course id in query and get course's games to list on screen
 	if (isset($_GET["course"])) {
@@ -69,7 +69,7 @@ Initially displays courses view. This view displays an instructors saved courses
     <link rel="stylesheet" href="https://use.fontawesome.com/releases/v5.0.13/css/all.css" integrity="sha384-DNOHZ68U8hZfKXOrtjWvjxusGo9WQnrNx2sqG0tfsghAvtVlRW3tvkXWZh58N9jp" crossorigin="anonymous">
   </head>
   <body style="background-color: #d3f6ff;">
-  
+
   	<!-- TITLE BAR => displays ND monogram, title, and name of user-->
   	<div class="title-bar" style="background-color: #0a4c6d">
 	  <div class="title-bar-left">
@@ -83,7 +83,7 @@ Initially displays courses view. This view displays an instructors saved courses
 	    		<?= $selectedCourseName ? $selectedCourseName : ($gameInfo ? $gameInfo['name'] : "Welcome, Admin!") ?>
 	    	</h3>
 	    	<h6 style="margin-left: 30px"><?= $selectedCourseSection ? 'Section '.$selectedCourseSection : ''?></h6>
-	    	<h6 id="sessionIdSubheader" style="display: <?= $sessionRunning ? '' : 'none' ?>; margin-left: 30px"> 
+	    	<h6 id="sessionIdSubheader" style="display: <?= $sessionRunning ? '' : 'none' ?>; margin-left: 30px">
 				<?= $gameInfo ? "Session ID: ".$gameInfo['id'] : "" ?>
 			</h6>
 	    </span>
@@ -120,7 +120,7 @@ Initially displays courses view. This view displays an instructors saved courses
 		<br>
 
 		<!-- Display Message if no content (no courses or no games added yet) -->
-		<?php 
+		<?php
 		if((isset($_GET['course'])&&count($games)==0&&$txt='Games')||(!$_GET&&count($courses)==0&&$txt='Courses')){
 		?>
 			<div style="width: 500px; margin: 70px auto 30px auto;">
@@ -133,14 +133,14 @@ Initially displays courses view. This view displays an instructors saved courses
 
 		<!-- SELECT COURSE SECTION -->
 		<div id="course_options" style="display: none">
-			<?php 
+			<?php
 			$course_num = 0;
 			$course_backgrounds = ["background: linear-gradient(141deg, #0fb88a 20%, #0fb8ad 80%);",
 							"background: linear-gradient(141deg, #0fb8ad 20%, #1fc8db 80%);",
 							"background: linear-gradient(141deg, #1fc8db 20%, #24b0e2 80%);"];
 
 			// loop thru courses for instructor and display as tiles on screen, in rows of 3
-			foreach ($courses as $course) { 				
+			foreach ($courses as $course) {
 				if ($course_num == 0) {  ?>
 					<div class="grid-x grid-padding-x small-up-2 medium-up-3" style="margin-bottom: 30px;">
 			<?php } ?>
@@ -161,22 +161,22 @@ Initially displays courses view. This view displays an instructors saved courses
 						</div>
 			<?php if ($course_num == 2) { ?>
 					</div>
-			<?php } 
-			$course_num == 2 ? $course_num = 0 : $course_num++; 
-			}	?>  
+			<?php }
+			$course_num == 2 ? $course_num = 0 : $course_num++;
+			}	?>
 		</div>
 		<!-- end course options section -->
 
 		<!-- SELECT GAME SECTION -->
 		<div id="game_options" style="display: none;">
-			<?php 
+			<?php
 			$game_num = 0;
 			$backgrounds = ["background: linear-gradient(141deg, #5b18bf 20%, #6858f1 80%);",
 							"background: linear-gradient(141deg, #6858f1 20%, #4c55f7 80%);",
 							"background: linear-gradient(141deg, #4c55f7 20%, #008dd1 80%);"];
 
 			// display games within selected course as tiles in rows of 3
-			foreach ($games as $game) {				
+			foreach ($games as $game) {
 				if ($game_num == 0) {  ?>
 					<div class="grid-x grid-padding-x small-up-2 medium-up-3" style="margin-bottom: 30px;">
 			<?php } ?>
@@ -198,8 +198,8 @@ Initially displays courses view. This view displays an instructors saved courses
 						</div>
 			<?php if ($game_num == 2) { ?>
 					</div>
-			<?php } 
-			$game_num == 2 ? $game_num = 0 : $game_num++; 
+			<?php }
+			$game_num == 2 ? $game_num = 0 : $game_num++;
 			}	?>
 		</div>
 		<!-- end game options -->
@@ -230,7 +230,7 @@ Initially displays courses view. This view displays an instructors saved courses
 			</div>
 		</div>
 	</div>
-	
+
 	<!-- MODALS -->
 	<!-- ============================== -->
 	<!-- Add New Course Modal -->
@@ -273,7 +273,7 @@ Initially displays courses view. This view displays an instructors saved courses
 
 	<!-- Add New Game Modal -->
 	<div class="large reveal" id="newGameModal" data-reveal data-animation-in="slide-in-up" data-animation-out="slide-out-down" style="background-color: #f7f7f7; border-radius: 5px; opacity: 0.925; min-height: 600px;overflow-x: hidden;">
-		
+
 		<div style="border-radius: 5px; background-color: #0a4c6d; margin: -19px -24px -10px -19px; width: 1201px;">
 			<h2 style="padding: 15px 0 5px 15px"><strong style="color: #FFF;"><?= $gameInfo ? "Edit Game" : "Add New Game" ?></strong></h2>
 			<h4 id="gameConfigSubtitle" style="margin-left: 25px; padding-bottom: 10px; color: white; display: none;">
@@ -325,7 +325,7 @@ Initially displays courses view. This view displays an instructors saved courses
 					</div>
 				  </div>
 				  <div id="monopoly" class="cell small-5" style="cursor: pointer; background: <?= $gameInfo["market_struct"] == "monopoly" ? "green" : "linear-gradient(141deg, #6dc2f4 20%, #4f7fcc 80%)" ?>; height: 120px; border-radius: 10px" onclick="structClicked('monopoly')">
-					<div class="verticalyCenter">  	
+					<div class="verticalyCenter">
 					  	<i class="fas fa-crown fa-2x game_config_content" style="float: left; margin-left: 40px"></i>
 					  	<span data-tooltip tabindex="1" title="There is	only 1 firm in this market selling a unique product. There are no close substitutes. Entry into the market is completely blocked." data-click-open="false">
 					  		<h4 class="game_config_content" style="font-weight: 300">Monopoly</h4>
@@ -552,9 +552,9 @@ Initially displays courses view. This view displays an instructors saved courses
 
     	// display warning message when delete button is pressed
 		function deleteCourse() {
-			if (confirm("Are you sure you want to delete this course?\nThis action will also delete any games saved within course.")) 
+			if (confirm("Are you sure you want to delete this course?\nThis action will also delete any games saved within course."))
 				$('#deleteCourseForm').submit();
-		
+
     	}
 
     	// add click event to reveal modal to add corse/game
@@ -603,14 +603,14 @@ Initially displays courses view. This view displays an instructors saved courses
     			document.getElementById("prompt_symbol").className = "fas fa-clipboard-list fa-2x";
 
     			$('#session_toggle').fadeIn(500);
-    			$('#view_game').fadeIn(1000); 
+    			$('#view_game').fadeIn(1000);
     			$('#delete').fadeIn(1500);
     		});
     	}
 
     	function toggleSession(id, gameName, mode) { // makes call to change session live status
     		var priceHistory = []; var shockYear=0;
-    		if ('<?= $gameInfo["market_struct"] ?>' == 'perfect') {
+    		if ('<?= isset($gameInfo["market_struct"]) && $gameInfo["market_struct"] ?>' == 'perfect') {
     			// if toggling a perfect comp game, generate the 25 yr price history
     			priceHistory = [50];
     			for (var i=1;i<25;i++) {
@@ -621,7 +621,7 @@ Initially displays courses view. This view displays an instructors saved courses
 		    			price = 0.5+0.999*prevPrice+random(1,2)+random(0,10);
 		    			shockYear=i;
 		    		}
-		    		else 
+		    		else
 		    			price = 0.5+0.999*prevPrice+random(1,2);
 
 		    		priceHistory.push(price.toFixed(2));
@@ -633,7 +633,7 @@ Initially displays courses view. This view displays an instructors saved courses
 		    	data: {action: "toggle", id: id, priceHist: priceHistory.join()},
 		    	success: function(toggledOn) {
 		    		// update screen accordingly based on weather going online or offline
-		    		if (toggledOn) { 
+		    		if (toggledOn) {
 		    			$('#sessionIdSubheader').css('display', '');
 		    			$('#toggleColor').css('background', "linear-gradient(141deg, #f1c00b 20%, #e2d009 80%)");
 		    			$('#toggleIcon').removeClass(); $('#dynamicButtonIcon').removeClass();
@@ -658,7 +658,7 @@ Initially displays courses view. This view displays an instructors saved courses
     	}
 
     	// click handler for game results/edit game button
-	    $(document).on('click', '#dynamicButtonFunc', function() { 
+	    $(document).on('click', '#dynamicButtonFunc', function() {
 	    	if ($('#sessionRunning').val() == 1)
 	    		redirectResultsPage();
 	    	else
@@ -760,7 +760,7 @@ Initially displays courses view. This view displays an instructors saved courses
     		$('#gameTypeSubtitle').css('display', 'none');
 			$('#gameConfigSubtitle').css('display','');
 
-			dynamicConfigFunc('<?=$gameInfo["market_struct"]?>');
+			dynamicConfigFunc('<?= isset($gameInfo["market_struct"]) && $gameInfo["market_struct"] ?>');
     	}
     	// ----------------
 

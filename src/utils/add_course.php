@@ -7,7 +7,7 @@ Last Update:
 */
 ini_set('display_errors', 1); error_reporting(-1);
 // include 'sql_settup.php';
-require_once "../../../tsugi/config.php";
+require_once "../../../../../tsugi/config.php";
 
 use \Tsugi\Core\LTIX;
 
@@ -21,13 +21,13 @@ $QW_DAO = new QW_DAO($PDOX, $p);
 
 
 // Add new course
-if (isset($_POST['name']) && isset($_POST['section']) && isset($_POST['avatar'])) { 
+if (isset($_POST['name']) && isset($_POST['section']) && isset($_POST['avatar'])) {
 	$QW_DAO->addCourse($USER->email, $_POST['name'], $_POST['section'],$_POST['avatar']);
 }
 	// Delete existing course and its games
-else { 
-	$QW_DAO->addCourse($_POST['nadeleteIdme']
-	
+else {
+	$QW_DAO->addCourse($_POST['nadeleteIdme']);
+
 	$delete_sql = "DELETE FROM Courses WHERE id=".$_POST['deleteId'];
 
 	// Delete the course
@@ -42,6 +42,6 @@ else {
 
 		header("Location: ../../src/admin_page.php");
 	}
-	else 
+	else
 	    echo "Error: " . $delete_sql . "<br>" . $mysqli->error;
 }
