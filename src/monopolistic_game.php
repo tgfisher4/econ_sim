@@ -13,7 +13,7 @@ Advanced: output=Q and prices, marketing, production facility development, produ
 Last Update:
 */
 include 'utils/sql_settup.php';
-require_once "../../tsugi/config.php";
+require_once "../tsugi_config.php";
 
 use \Tsugi\Core\LTIX;
 use Tsugi\Core\WebSocket;
@@ -52,7 +52,7 @@ $gameInfo = getGameInfo((int)$_GET['session']);
     		if (to_section == 'instructions') {
     			$('#beginModal').foundation('open');
     			return;
-    		} 
+    		}
     		var headers = {"dashboard_section": "Dashboard", "income_section": "Income Statement", "cost_section": "Production Cost Data", "expenditures_section": "Expenditures Data"};
     		var elements = document.getElementsByClassName("display_sections");
 
@@ -78,7 +78,7 @@ $gameInfo = getGameInfo((int)$_GET['session']);
   </head>
   <body style="background-color: #d3f6ff;">
 
-	<div class="off-canvas position-right" id="offCanvas" data-off-canvas data-transition="overlap" style="background-color: #121212"> 
+	<div class="off-canvas position-right" id="offCanvas" data-off-canvas data-transition="overlap" style="background-color: #121212">
 
 		<!-- Menu -->
 		<ul class="vertical menu darken" style="color: white">
@@ -140,7 +140,7 @@ $gameInfo = getGameInfo((int)$_GET['session']);
 							<div class="surplusTooltip">
 								<span class="surplusTooltiptext">Surplus:</span>
 								<input type="number" id="quantity" min="1" max="500" placeholder="1 - 500 Units" style="width: 120px;">
-							</div>	
+							</div>
 						<p style="float: left; padding: 0 10px 0 15px"><b>Price: </b></p>
 							<input type="number" id="price" min="1" max="500" placeholder="$1 - $XX??" style="width: 120px; float: left;">
 						<?php if ($gameInfo['difficulty']!='principles') { ?>
@@ -151,7 +151,7 @@ $gameInfo = getGameInfo((int)$_GET['session']);
 								</div>
 								<div class="grid-x">
 									<div class="cell small-6" style="font-weight: 450">Marketing:</b></div>
-									<div class="cell small-6"> 
+									<div class="cell small-6">
 										<div class="input-group">
 											<span class="input-group-label"><i class="fas fa-dollar-sign"></i></i></span><input class="input-group-field" min="0" type="number" id="marketingInput" value="0">
 										</div>
@@ -159,7 +159,7 @@ $gameInfo = getGameInfo((int)$_GET['session']);
 								</div>
 								<div class="grid-x">
 									<div class="cell small-6"><b style="font-weight: 450;">Production Facility Development:</b></div>
-									<div class="cell small-6"> 
+									<div class="cell small-6">
 										<div class="input-group">
 											<span class="input-group-label"><i class="fas fa-dollar-sign"></i></i></span><input class="input-group-field" min="0" type="number" id="facilityInput" value="0">
 										</div>
@@ -167,7 +167,7 @@ $gameInfo = getGameInfo((int)$_GET['session']);
 								</div>
 								<div class="grid-x">
 									<div class="cell small-6"><b style="font-weight: 450;">Product Development:</b></div>
-									<div class="cell small-6"> 
+									<div class="cell small-6">
 										<div class="input-group">
 											<span class="input-group-label"><i class="fas fa-dollar-sign"></i></i></span><input class="input-group-field" min="0" type="number" id="productInput" value="0">
 										</div>
@@ -176,7 +176,7 @@ $gameInfo = getGameInfo((int)$_GET['session']);
 								<?php if ($gameInfo['difficulty']=='advanced') { ?>
 									<div class="grid-x">
 										<div class="cell small-6"><b style="font-weight: 450;">Human Capital Development:</b></div>
-										<div class="cell small-6"> 
+										<div class="cell small-6">
 											<div class="input-group">
 												<span class="input-group-label"><i class="fas fa-dollar-sign"></i></i></span><input class="input-group-field" min="0" type="number" id="humanInput" value="0">
 											</div>
@@ -184,7 +184,7 @@ $gameInfo = getGameInfo((int)$_GET['session']);
 									</div>
 									<div class="grid-x">
 										<div class="cell small-6"><b style="font-weight: 450;">Distribution Development:</b></div>
-										<div class="cell small-6"> 
+										<div class="cell small-6">
 											<div class="input-group">
 												<span class="input-group-label"><i class="fas fa-dollar-sign"></i></i></span><input class="input-group-field" min="0" type="number" id="distributionInput" value="0">
 											</div>
@@ -204,7 +204,7 @@ $gameInfo = getGameInfo((int)$_GET['session']);
 		<input type="hidden" id="usrname" value="<?=$USER->email?>">
 		<input type="hidden" id="mode" value="<?=$gameInfo['mode']?>">
 
-		<div id="mainContent"> 
+		<div id="mainContent">
 
 			<!-- before first submission prompt -->
 			<div id="preStartPrompt" style="width: 500px; margin: 280px auto 30px auto;">
@@ -215,7 +215,7 @@ $gameInfo = getGameInfo((int)$_GET['session']);
 			</div>
 
 			<!-- Dashboard -->
-			<div class="display_sections" id="dashboard_section"> 
+			<div class="display_sections" id="dashboard_section">
 				<div class="section_content" id="summarySection" style="display: none;">
 					<div class="section_cell" style="width:80%; margin: auto;">
 						<h4 id="summaryYear" style="text-align: center; font-weight: 450">Summary for Year </h4>
@@ -475,8 +475,8 @@ $gameInfo = getGameInfo((int)$_GET['session']);
 		<div class="instructionsStuff">
 			<h2 style="text-align: left;"><strong>Instructions</strong></h2>
 
-			<p>In this simulation you will be the owner of a Financial Analytics firm, selling your services in a monopolistically competitive environment. Your goal is to set prices and output levels in this environment in order to profit maximize.</p> 
-			<p>For each of <?= $gameInfo['num_rounds'] ?> periods you will observe previous prices and choose both a price and a quantity to bring to the market in the next period.  Since you are one of many firms selling in this market, consulting the market research reports detailing the industry averages may help as you make the profit maximizing choices.</p> 
+			<p>In this simulation you will be the owner of a Financial Analytics firm, selling your services in a monopolistically competitive environment. Your goal is to set prices and output levels in this environment in order to profit maximize.</p>
+			<p>For each of <?= $gameInfo['num_rounds'] ?> periods you will observe previous prices and choose both a price and a quantity to bring to the market in the next period.  Since you are one of many firms selling in this market, consulting the market research reports detailing the industry averages may help as you make the profit maximizing choices.</p>
 			<p>At the end of the simulation, cumulative profits will be measured and grading against a hypothetical firm acting optimally.</p>
 
 		</div>
@@ -573,7 +573,7 @@ $gameInfo = getGameInfo((int)$_GET['session']);
 				case 'advanced':
 					var totalCost = a0+a1*Math.pow(quantity,3)-a2*Math.pow(quantity,2)+a3*quantity+a4*price+humanCapAmount-a5*Math.pow(humanCapAmount,0.5)+productDevAmount+distributionAmount+marketingAmount;
 
-					pieData=[marketingAmount,productionFacilAmount,productDevAmount,humanCapAmount,distributionAmount];					
+					pieData=[marketingAmount,productionFacilAmount,productDevAmount,humanCapAmount,distributionAmount];
 					break;
 				case 'intermediate':
 					var totalCost = a0+a1*Math.pow(quantity,3)-a2*Math.pow(quantity,2)+a3*quantity+a4*price+productDevAmount+marketingAmount;
@@ -604,7 +604,7 @@ $gameInfo = getGameInfo((int)$_GET['session']);
 			// profit & revenue
 			if (excessQuantity>0)
 				revenue = price*qDemand;
-			else 
+			else
 				revenue = price*quantity;
 			profit = revenue-totalCost;
 			profit = parseInt(profit.toFixed(2));
@@ -701,30 +701,30 @@ $gameInfo = getGameInfo((int)$_GET['session']);
 
 			// call func to submit data in querry
 			$.ajax({
-		  		url: "utils/session.php", 
+		  		url: "utils/session.php",
 		  		method: 'POST',
 	  			data: { action: 'update_gameSessionData', groupId: groupId, username: $('#usrname').val(), opponent: null, quantity: quantity, revenue: revenue,
 	  				profit: profit, percentReturn: percentReturn.toPrecision(4), price: price, unitCost: marginalCost, totalCost: totalCost, complete: gameOver?1:0, gameId: <?= $gameInfo['id'] ?>  }
 	  		});
-	  		
+
 	  		// send message to tell instructor results to update
 	  		if (!broadcast_web_socket) {
-		  		broadcast_web_socket = tsugiNotifySocket(); 
-		  		broadcast_web_socket.onopen = function(evt) { 
+		  		broadcast_web_socket = tsugiNotifySocket();
+		  		broadcast_web_socket.onopen = function(evt) {
 					broadcast_web_socket.send($('#sessionId').val());
 				}
 			}
 			else
 				broadcast_web_socket.send($('#sessionId').val());
-				
+
 		}
 
 		const urlPrefix = window.location.href.substr(0, window.location.href.indexOf('src'));
-    	
+
 		function leaveGame() { // fires when one player hits exit game button in side menu
 			// remove student from gamesession table
 			$.ajax({
-		  		url: "utils/session.php", 
+		  		url: "utils/session.php",
 		  		method: 'POST',
 	  			data: { action: 'remove_student', id: $('#sessionId').val(), player: $('#usrname').val() }
 	  		});
@@ -749,7 +749,7 @@ $gameInfo = getGameInfo((int)$_GET['session']);
     	var animated = [false,false,false];
     	var animatedB = [false,false,false];
     	var animatedC = [false,false,false];
-    	$(window).scroll(function() { 
+    	$(window).scroll(function() {
     	 	if(window.pageYOffset>55){
 		    	if ($('#dynamicHeader').text() == 'Income Statement' && !animated[0]) {
 		    		$('#animate0').addClass('animated flipInX').one('webkitAnimationEnd mozAnimationEnd', function() {
@@ -827,9 +827,9 @@ $gameInfo = getGameInfo((int)$_GET['session']);
 	  var seconds = 0;
 	  var totalSeconds = $('#timer').attr('data-legnth')*60;
 	  var storeTotal = totalSeconds;
-	  
+
 	  var intervalId = null;
-	  
+
 		function startTimer() {
 			--totalSeconds;
 
@@ -840,10 +840,10 @@ $gameInfo = getGameInfo((int)$_GET['session']);
 		    	alertify.set('notifier','delay', 5);
 				alertify.set('notifier','position', 'top-right');
 				alertify.error('<i class="fas fa-exclamation-circle"></i><br><strong>Year: '+year+ ' - Time\'s Up!</strong><br>'+$("#quantity").val()+' was submitted.');
-				
+
 		    	clearInterval(intervalId);
 		    	$('#price_submit_btn').prop('disabled', true);
-		    	
+
 		    	submitResponse();
 		    }
 
@@ -870,7 +870,7 @@ $gameInfo = getGameInfo((int)$_GET['session']);
 	  			$('#endModal').foundation('open');
 	  			clearInterval(intervalId);
 	  		}
-	  		else 
+	  		else
 	  			submitResponse();
 	  	} else { // If user hasn't entered quantity or entered invalid quantity, button will shake
 	  		alertify.set('notifier','delay', 5);
@@ -920,7 +920,7 @@ $gameInfo = getGameInfo((int)$_GET['session']);
 			            data: profitHistory,
 			            backgroundColor: 'rgba(0, 153, 255, 0.2)',
 			            borderColor: 'rgba(0, 153, 255, 1)',
-			            borderWidth: 1	
+			            borderWidth: 1
 			        }];
 			    var usrCumulativeData = [{
 			            label: 'Your Revenue ($)',
@@ -943,7 +943,7 @@ $gameInfo = getGameInfo((int)$_GET['session']);
 			                'rgba(0, 153, 255,1)'
 			            ],
 			            borderWidth: 1
-			        }]; 
+			        }];
 			    var usrQuantityData = {
 					label: 'Your Sales (Units)',
 					data: quantityHistory,
@@ -1072,7 +1072,7 @@ $gameInfo = getGameInfo((int)$_GET['session']);
 				            borderColor: [
 				                'rgba(0,99,132,1)'
 				            ],
-				            borderWidth: 1	
+				            borderWidth: 1
 				        }]
 				    },
 				    options: chartOptions
@@ -1119,12 +1119,12 @@ $gameInfo = getGameInfo((int)$_GET['session']);
 					borderColor: 'rgba(86, 35, 255,1)',
 					borderWidth: 1
 				};
-				
+
 				if ('<?=$gameInfo["difficulty"]?>'=='advanced')
 					var set = [adData,facilData,prodData,humanData,distrData];
-				else 
+				else
 					var set = [adData,facilData,prodData]
-				
+
 				var expData = {
 					labels: graphLabels,
 					datasets: set
@@ -1169,7 +1169,7 @@ $gameInfo = getGameInfo((int)$_GET['session']);
 				new Chart(document.getElementById("expendituresPieChart"), {
 				    type: 'pie',
 				    data: pieDataset,
-				    options: { 
+				    options: {
 				    	maintainAspectRatio:false
 				    }
 				});
@@ -1191,7 +1191,7 @@ $gameInfo = getGameInfo((int)$_GET['session']);
   		overflow-x: hidden;
   	}
 
-  	#mainContent { 
+  	#mainContent {
   		flex: 1 0 auto;
   		min-height: 300px;
   	}
@@ -1220,7 +1220,7 @@ $gameInfo = getGameInfo((int)$_GET['session']);
 	}
 	.cell_graph {
 		width: 550px;
-		height: 460px; 
+		height: 460px;
 	}
 	canvas {
 		height: 350px !important;
@@ -1270,7 +1270,7 @@ $gameInfo = getGameInfo((int)$_GET['session']);
 		width: 100%;
 		height: 150px;
 		background-color: #fcfcfc;
-		filter: drop-shadow(0px 3px 5px black); 
+		filter: drop-shadow(0px 3px 5px black);
 		position: fixed;
 		z-index: 2;
 		margin-top: 0px;

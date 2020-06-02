@@ -11,7 +11,7 @@ Last Update: Updated socket.io to Tsugi Websockets
 */
 
 include 'utils/sql_settup.php';
-require_once "../../tsugi/config.php";
+require_once "../tsugi_config.php";
 
 use \Tsugi\Core\LTIX;
 use Tsugi\Core\WebSocket;
@@ -80,7 +80,7 @@ if ($gameInfo['mode'] == 'multi') $startGame = false;
   </head>
   <body style="background-color: #d3f6ff;">
 
-	<div class="off-canvas position-right" id="offCanvas" data-off-canvas data-transition="overlap" style="background-color: #121212"> 
+	<div class="off-canvas position-right" id="offCanvas" data-off-canvas data-transition="overlap" style="background-color: #121212">
 
 		<!-- Menu -->
 		<ul class="vertical menu darken" style="color: white">
@@ -168,7 +168,7 @@ if ($gameInfo['mode'] == 'multi') $startGame = false;
 		<input type="hidden" id="opponent" value="">
 		<input type="hidden" id="mode" value="<?=$gameInfo['mode']?>">
 
-		<div id="mainContent"> 
+		<div id="mainContent">
 
 			<!-- before first submission prompt -->
 			<div id="preStartPrompt" style="width: 500px; margin: 280px auto 30px auto;">
@@ -179,7 +179,7 @@ if ($gameInfo['mode'] == 'multi') $startGame = false;
 			</div>
 
 			<!-- Dashboard -->
-			<div class="display_sections" id="dashboard_section"> 
+			<div class="display_sections" id="dashboard_section">
 				<div class="section_content" id="summarySection" style="display: none;">
 					<div class="section_cell" style="float: left;">
 						<h4 id="summaryYear" style="text-align: center; font-weight: 450">Summary for Year </h4>
@@ -373,13 +373,13 @@ if ($gameInfo['mode'] == 'multi') $startGame = false;
 	<div class="reveal" id="beginModal" data-reveal data-animation-in="slide-in-up" style="border-radius: 5px; opacity: 0.9">
 		<h2 style="text-align: left;"><strong>Instructions</strong></h2>
 		<?php if ($gameInfo['market_struct']=='oligopoly') { ?>
-			<p>In this simulation you will be the owner of a non-durable commodity, selling your product in a oligopolistic market environment. Your goal is to determine output levels in this strategically interactive environment in order to profit maximize.</p> 
+			<p>In this simulation you will be the owner of a non-durable commodity, selling your product in a oligopolistic market environment. Your goal is to determine output levels in this strategically interactive environment in order to profit maximize.</p>
 			<p>For each of <?= $gameInfo['num_rounds'] ?> periods you will observe previous prices and choose a quantity to sell in the next period.  Since you are one of two firms selling in this market, your choice, along with your competitor’s choice will determine your profits each round.</p>
 			<p>At the end of the simulation, cumulative profits will be measured and grading against a hypothetical firm acting optimally.</p>
 		<?php } else { ?>
-			<p>In this simulation you will be the owner of a non-durable commodity, selling your product in a monopolistic market environment. Your goal is to determine output levels in order to profit maximize.</p> 
+			<p>In this simulation you will be the owner of a non-durable commodity, selling your product in a monopolistic market environment. Your goal is to determine output levels in order to profit maximize.</p>
 			<p>Each period you will observe previous prices and choose a quantity to sell in the next period.  Since you are the only firm selling in this market, there is no industry market research to consult.</p>
-			<p>At the end of the simulation, cumulative profits will be measured and grading against a hypothetical firm acting optimally.</p> 
+			<p>At the end of the simulation, cumulative profits will be measured and grading against a hypothetical firm acting optimally.</p>
 		<?php } ?>
 		<button class="close-button" data-close aria-label="Close reveal" type="button">
 			<span aria-hidden="true">&times;</span>
@@ -421,7 +421,7 @@ if ($gameInfo['mode'] == 'multi') $startGame = false;
     	const numRounds = parseInt($('#numRounds').val(), 10);
 
     	var gameIsComplete = false;
-    	
+
     	broadcast_web_socket = null;
     	room_web_socket = null;
 
@@ -455,15 +455,15 @@ if ($gameInfo['mode'] == 'multi') $startGame = false;
 
 	    if ('<?=$gameInfo['mode']?>' == 'single') {
 	    	$('#beginModal').foundation('open');
-	    } 
+	    }
 	    else {
 	    	$.ajax({
-		  		url: "utils/websocket_util.php", 
+		  		url: "utils/websocket_util.php",
 		  		method: 'POST',
 	  			data: { action: 'join_multi', sessionId: $('#sessionId').val(), username: $('#usrname').val(), groupId: groupId },
 	  			success: function(response) {
 	  				// if response is returned, the user joined a waiting player, so game can start
-	  				if (response) { 
+	  				if (response) {
 	  					let json = JSON.parse(response);
 	  					if (json[0].length > 10)
 							groupId=json[0].substring(0, json[0].length - 1);
@@ -472,7 +472,7 @@ if ($gameInfo['mode'] == 'multi') $startGame = false;
 
 	  					// join socket to room
 	  					room_web_socket = tsugiNotifySocket(groupId);
-	  					
+
 	  					// hide the wait screen
 						dismissWaitScreen();
 						// open instructions
@@ -497,7 +497,7 @@ if ($gameInfo['mode'] == 'multi') $startGame = false;
 
 					  	room_web_socket = tsugiNotifySocket(groupId);
 					  	room_web_socket.onmessage = function(evt) {
-					  		if (evt.data.includes('@')) { 
+					  		if (evt.data.includes('@')) {
 						        // hide the wait screen
 								dismissWaitScreen();
 								// open instructions
@@ -511,15 +511,15 @@ if ($gameInfo['mode'] == 'multi') $startGame = false;
 							}
 							else if (evt.data = "exit") {
 								const urlPrefix = window.location.href.substr(0, window.location.href.indexOf('src'));
-								window.location = urlPrefix+'src/student.php?session=err2';	
+								window.location = urlPrefix+'src/student.php?session=err2';
 							}
 					    };
 					}
 
 	  			}
 	  		});
-	    }	    
-		
+	    }
+
 
 		// singleplayer submission occured
 		function getSingleResults(quantity) {
@@ -527,7 +527,7 @@ if ($gameInfo['mode'] == 'multi') $startGame = false;
 			if (year != numRounds) intervalId = setInterval(startTimer, 1000);
 
 			$.ajax({
-				url: "http://localhost:8888/cgi-bin/econ_test/single?quantity="+quantity+"&intercept="+$('#dIntr').val()+"&slope="+$('#dSlope').val()+"&fixed="+$('#fCost').val()+"&const="+$('#cCost').val(), 
+				url: "http://localhost:8888/cgi-bin/econ_test/single?quantity="+quantity+"&intercept="+$('#dIntr').val()+"&slope="+$('#dSlope').val()+"&fixed="+$('#fCost').val()+"&const="+$('#cCost').val(),
 				success: function(data) {
 					var json = JSON.parse(data);
 
@@ -544,7 +544,7 @@ if ($gameInfo['mode'] == 'multi') $startGame = false;
 
 				  	// save equilibrium to database for display in instructor results
 				  	$.ajax({
-				  		url: "utils/game_util.php", 
+				  		url: "utils/game_util.php",
 				  		method: 'POST',
 			  			data: { equilibrium: json['equilibrium'], id: $('#sessionId').val() }
 			  		});
@@ -604,7 +604,7 @@ if ($gameInfo['mode'] == 'multi') $startGame = false;
 
 					// call func to submit data in querry
 					$.ajax({
-				  		url: "utils/session.php", 
+				  		url: "utils/session.php",
 				  		method: 'POST',
 			  			data: { action: 'update_gameSessionData', groupId: groupId, username: $('#usrname').val(), opponent: null, quantity: quantity, revenue: json['totalRevenue'],
 			  				profit: json['profit'], percentReturn: json['percentReturn'].toPrecision(4), price: json['demand'], unitCost: json['unitCost'], totalCost: json['totalCost'], complete: gameOver?1:0, gameId: <?= $gameInfo['id'] ?>  }
@@ -613,15 +613,15 @@ if ($gameInfo['mode'] == 'multi') $startGame = false;
 
 			  		// send message to notify instructor results to update
 					if (!broadcast_web_socket) {
-				  		broadcast_web_socket = tsugiNotifySocket(); 
-				  		broadcast_web_socket.onopen = function(evt) { 
+				  		broadcast_web_socket = tsugiNotifySocket();
+				  		broadcast_web_socket.onopen = function(evt) {
 							broadcast_web_socket.send($('#sessionId').val());
 						}
 					}
 					else
 						broadcast_web_socket.send($('#sessionId').val());
-					  		
-				}	
+
+				}
 			});
 		}
 
@@ -647,9 +647,9 @@ if ($gameInfo['mode'] == 'multi') $startGame = false;
 
     		// call python script to get results
 	    	$.ajax({
-	    		url: "http://localhost:8888/cgi-bin/econ_test/multi?q1="+quantity+"&q2="+oppQuantity+"&intercept="+$('#dIntr').val()+"&slope="+$('#dSlope').val()+"&fixed="+$('#fCost').val()+"&const="+$('#cCost').val(), 
+	    		url: "http://localhost:8888/cgi-bin/econ_test/multi?q1="+quantity+"&q2="+oppQuantity+"&intercept="+$('#dIntr').val()+"&slope="+$('#dSlope').val()+"&fixed="+$('#fCost').val()+"&const="+$('#cCost').val(),
 	    		success: function(data) {
-				
+
 					var json = JSON.parse(data);
 
 					// Enable/update summary display content
@@ -664,7 +664,7 @@ if ($gameInfo['mode'] == 'multi') $startGame = false;
 
 				  	// save equilibrium to database for display in instructor results
 				  	$.ajax({
-				  		url: "utils/game_util.php", 
+				  		url: "utils/game_util.php",
 				  		method: 'POST',
 			  			data: { equilibrium: json['equilibrium'], id: $('#sessionId').val() }
 			  		});
@@ -751,9 +751,9 @@ if ($gameInfo['mode'] == 'multi') $startGame = false;
 
 					// call func to submit data in query
 					$.ajax({
-				  		url: "utils/session.php", 
+				  		url: "utils/session.php",
 				  		method: 'POST',
-			  			data: { action: 'update_gameSessionData', groupId: groupId, username: $('#usrname').val(), opponent: $('#opponent').val(), quantity: quantity, 
+			  			data: { action: 'update_gameSessionData', groupId: groupId, username: $('#usrname').val(), opponent: $('#opponent').val(), quantity: quantity,
 			  				revenue: json['revenue1'], profit: json['profit1'], percentReturn: json['percentReturn1'].toPrecision(4), price: json['demand'],
 			  				unitCost: json['unitCost'], totalCost: json['totalCost'], complete: gameOver, gameId: <?= $gameInfo['id'] ?> }
 			  		});
@@ -761,8 +761,8 @@ if ($gameInfo['mode'] == 'multi') $startGame = false;
 
 			  		// send global message for instructor results
 			  		if ($('#usrname').val() == submitData[0]) {
-			  			if (!broadcast_web_socket) { 
-							broadcast_web_socket = tsugiNotifySocket(); 
+			  			if (!broadcast_web_socket) {
+							broadcast_web_socket = tsugiNotifySocket();
 							broadcast_web_socket.onopen = function(evt) {
 								broadcast_web_socket.send($('#sessionId').val());
 							}
@@ -777,7 +777,7 @@ if ($gameInfo['mode'] == 'multi') $startGame = false;
     	//---------------------------
     	var animated = [false,false,false];
     	var animatedB = [false,false,false];
-    	$(window).scroll(function() { 
+    	$(window).scroll(function() {
     	 	if(window.pageYOffset>55){
 		    	if ($('#dynamicHeader').text() == 'Income Statement' && !animated[0]) {
 		    		$('#animate0').addClass('animated flipInX').one('webkitAnimationEnd mozAnimationEnd', function() {
@@ -840,9 +840,9 @@ if ($gameInfo['mode'] == 'multi') $startGame = false;
 	  var seconds = 0;
 	  var totalSeconds = $('#timer').attr('data-legnth')*60;
 	  var storeTotal = totalSeconds;
-	  
+
 	  var intervalId = null;
-	  
+
 	  function startTimer() {
 	    --totalSeconds;
 
@@ -853,10 +853,10 @@ if ($gameInfo['mode'] == 'multi') $startGame = false;
 	    	alertify.set('notifier','delay', 3);
 			alertify.set('notifier','position', 'top-right');
 			alertify.error('<i class="fas fa-exclamation-circle"></i><br><strong>Year: '+year+ ' - Time\'s Up!</strong><br>'+$("#quantity").val()+' was submitted.');
-			
+
 	    	clearInterval(intervalId);
 	    	$('#price_submit_btn').prop('disabled', true);
-	    	
+
 	    	submitResponse();
 	    }
 
@@ -921,30 +921,30 @@ if ($gameInfo['mode'] == 'multi') $startGame = false;
 		// Multiplayer mode
 		else {
 	  		$.ajax({
-		  		url: "utils/websocket_util.php", 
+		  		url: "utils/websocket_util.php",
 		  		method: 'POST',
 	  			data: { action: 'submit_multi', username: $('#usrname').val(), groupId: groupId, quantity: quantity },
 	  			success: function(response) {
 	  				// if response is returned, both players have submited. (This player submitted second)
-	  				if (response) {  
-	  					let json = JSON.parse(response); 
-	  					
-	  					
+	  				if (response) {
+	  					let json = JSON.parse(response);
+
+
 						room_web_socket.send($('#opponent').val());
-						
+
 
 	  					getMultiResults(json);
 	  				}
 	  				// if no response returned, user joined new game and is waiting for opponent
-	  				else { 
+	  				else {
 	  					$('#waitOppSub').css('display', 'inherit');
 
 	  					// wait for message that other player has submitted
-					  	room_web_socket.onmessage = function(evt) { 
+					  	room_web_socket.onmessage = function(evt) {
 					  		if (evt.data==$('#usrname').val().substring(0, $('#usrname').val().indexOf('@'))) {
 					  			// grab opponent's submission data from database
 					  			$.ajax({
-							  		url: "utils/websocket_util.php", 
+							  		url: "utils/websocket_util.php",
 							  		method: 'POST',
 						  			data: { action: 'get_opponent_data', groupId: groupId },
 						  			success: function(response) {
@@ -957,7 +957,7 @@ if ($gameInfo['mode'] == 'multi') $startGame = false;
 					  		}
 					  		else if (evt.data = "exit") {
 								const urlPrefix = window.location.href.substr(0, window.location.href.indexOf('src'));
-								window.location = urlPrefix+'src/student.php?session=err2';	
+								window.location = urlPrefix+'src/student.php?session=err2';
 							}
 					    };
 					}
@@ -980,7 +980,7 @@ if ($gameInfo['mode'] == 'multi') $startGame = false;
 		// if game is not over, remove student from session table so they can restart game
 		if (!gameIsComplete)
 			$.ajax({
-		  		url: "utils/session.php", 
+		  		url: "utils/session.php",
 		  		method: 'POST',
 	  			data: { action: 'remove_student', groupId: groupId }
 	  		});
@@ -1020,7 +1020,7 @@ if ($gameInfo['mode'] == 'multi') $startGame = false;
 			            data: profitHistory,
 			            backgroundColor: 'rgba(0, 153, 255, 0.2)',
 			            borderColor: 'rgba(0, 153, 255, 1)',
-			            borderWidth: 1	
+			            borderWidth: 1
 			        }];
 			    var oppIncomeData = [{
 			            label: $('#opponent').val()+'\'s Revenue ($)',
@@ -1034,7 +1034,7 @@ if ($gameInfo['mode'] == 'multi') $startGame = false;
 			            data: oppProfitHistory,
 			            backgroundColor: 'rgba(255, 128, 128, 0.2)',
 			            borderColor: 'rgba(255, 128, 128, 1)',
-			            borderWidth: 1	
+			            borderWidth: 1
 			        }];
 			    var usrCumulativeData = [{
 			            label: 'Your Revenue ($)',
@@ -1057,7 +1057,7 @@ if ($gameInfo['mode'] == 'multi') $startGame = false;
 			                'rgba(0, 153, 255,1)'
 			            ],
 			            borderWidth: 1
-			        }]; 
+			        }];
 			    var oppCumulativeData = [{
 			            label: $('#opponent').val()+'\'s Revenue ($)',
 			            data: oppCumulativeHistory,
@@ -1253,7 +1253,7 @@ if ($gameInfo['mode'] == 'multi') $startGame = false;
 				            borderColor: [
 				                'rgba(0,99,132,1)'
 				            ],
-				            borderWidth: 1	
+				            borderWidth: 1
 				        }]
 				    },
 				    options: chartOptions
@@ -1324,7 +1324,7 @@ if ($gameInfo['mode'] == 'multi') $startGame = false;
   		overflow-x: hidden;
   	}
 
-  	#mainContent { 
+  	#mainContent {
   		flex: 1 0 auto;
   		min-height: 300px;
   	}
@@ -1353,7 +1353,7 @@ if ($gameInfo['mode'] == 'multi') $startGame = false;
 	}
 	.cell_graph {
 		width: 550px;
-		height: 460px; 
+		height: 460px;
 	}
 	.graph {
 		width: 520px;
@@ -1404,7 +1404,7 @@ if ($gameInfo['mode'] == 'multi') $startGame = false;
 		width: 100%;
 		height: 150px;
 		background-color: #fcfcfc;
-		filter: drop-shadow(0px 3px 5px black); 
+		filter: drop-shadow(0px 3px 5px black);
 		position: fixed;
 		z-index: 2;
 		margin-top: 0px;

@@ -6,7 +6,7 @@
 
 ini_set('display_errors', 1); error_reporting(-1);
 include 'sql_settup.php';
-require_once "../../../tsugi/config.php";
+require_once "../../tsugi_config.php";
 require_once('../../dao/QW_DAO.php');
 
 use \Tsugi\Core\LTIX;
@@ -25,11 +25,11 @@ if ($_POST['action']=='join_multi') {
 
 	// $result = $mysqli->query('SELECT * FROM Sessions WHERE gameId="'.$_POST['sessionId'].'" AND player2 IS NULL LIMIT 1');
 
- //    if ($result->num_rows > 0) { // found user waiting for opponent, so join 
+ //    if ($result->num_rows > 0) { // found user waiting for opponent, so join
  //        $row = $result->fetch_assoc();
 
  //        // add opponent to player2 column in table
- //        $mysqli->query('UPDATE Sessions SET player2="'.$_POST['username'].'" WHERE id="'.$row['id'].'"');    
+ //        $mysqli->query('UPDATE Sessions SET player2="'.$_POST['username'].'" WHERE id="'.$row['id'].'"');
 
  //        // create array with important values to send back to browser
  //        // array contents: groupId, opponent
@@ -47,9 +47,9 @@ else if ($_POST['action']=='submit_multi') {
 	// $row = $result->fetch_assoc();
 
 	// if ($row['p1'] == NULL) {
-	//     $mysqli->query('UPDATE Sessions SET p1="'.$_POST['username'].'", p1Data="'.$_POST['quantity'].'" WHERE id="'.$row['id'].'"');   
+	//     $mysqli->query('UPDATE Sessions SET p1="'.$_POST['username'].'", p1Data="'.$_POST['quantity'].'" WHERE id="'.$row['id'].'"');
 
-	// } 
+	// }
 	// else {
 
 	//     $mysqli->query('UPDATE Sessions SET p1="'.$_POST['username'].'", p1Data="'.$_POST['quantity'].'" WHERE id="'.$row['id'].'"');

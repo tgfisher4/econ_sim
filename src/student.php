@@ -8,7 +8,7 @@
 
 Last Update:
 */
-require_once "../../config.php";
+require_once "../tsugi_config.php";
 
 use \Tsugi\Core\LTIX;
 
@@ -71,7 +71,7 @@ if ($USER->instructor) {
 			    <button id="joinButton" type="button" class="button" onclick="enterGame()">
 			    	<strong>Join Game </strong><i class="far fa-play-circle"></i>
 			    </button>
-			  </div> 
+			  </div>
 			</div>
 		</div>
 	</div>
@@ -97,7 +97,7 @@ if ($USER->instructor) {
 			alertify.set('notifier','delay', 4);
 			alertify.set('notifier','position', 'top-center');
 			alertify.error('<i class="fas fa-exclamation-triangle"></i>  Game Already Completed!');
-    	} 
+    	}
     	else if (window.location.search.includes("session=err")) {
 			alertify.set('notifier','delay', 4);
 			alertify.set('notifier','position', 'top-center');

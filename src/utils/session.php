@@ -1,4 +1,4 @@
-<?php 
+<?php
 /* session.php
 
 - Handles ajax requests related to a particular game session, including loading admin results, toggleing the game session on/off,
@@ -10,7 +10,7 @@ Change query in remove_student to look for groupId rather than student AND sessi
 */
 
 ini_set('display_errors', 1); error_reporting(-1);
-require_once "../../../tsugi/config.php";
+require_once "../../tsugi_config.php";
 require_once('../../dao/QW_DAO.php');
 
 use \Tsugi\Core\LTIX;
@@ -99,21 +99,21 @@ else if ($_POST['action'] == 'update_gameSessionData') {
 
 	// 	$mysqli->query("UPDATE GameSessionData Set player_quantity='".$quantityHist."', player_revenue='".$revenueHist."', player_profit='".$profitHist."', player_return='".$returnHist."', price='".$priceHist."', total_cost='".$totalCostHist."', complete='".$_POST['complete']."', gameId='".$_POST['gameId']."' WHERE groupId='".$_POST['groupId']."' AND player='".$_POST['username']."'");
 
-	// } 
+	// }
 	// // this is the student's first submission for this session, so create new row
-	// else { 
+	// else {
 	// 	$mysqli->query("INSERT INTO GameSessionData (groupId, gameId, player, opponent, player_quantity, player_revenue, player_profit, player_return, price, unit_cost, total_cost) VALUES ('".$_POST['groupId']."', '".$_POST['gameId']."', '".$_POST['username']."', '".$_POST['opponent']."', '".$_POST['quantity']."', '".$_POST['revenue']."', '".$_POST['profit']."', '".$_POST['percentReturn']."', '".$_POST['price']."', '".$_POST['unitCost']."', '".$_POST['totalCost']."')");
 	// }
 }
 
-// remove student from GameSessionData 
+// remove student from GameSessionData
 else if ($_POST['action'] == 'remove_student') {
 	$QW_DAO->removeFromSession($_POST['groupId']);
 	// $mysqli->query("DELETE FROM GameSessionData WHERE `groupId`='".$_POST['groupId']."'");
 	// $mysqli->query("DELETE FROM Sessions WHERE `groupId`='".$_POST['groupId']."'");
 }
 
-// instructor results page uses this function to grab the session data and display it 
+// instructor results page uses this function to grab the session data and display it
 else if ($_POST['action'] == 'retrieve_gameSessionData') {
 	echo $QW_DAO->retrieveSessionData($_POST['valueType'],$_POST["gameId"],$row['groupId'],$row['player']);
 
@@ -129,7 +129,7 @@ else if ($_POST['action'] == 'retrieve_gameSessionData') {
 	// 	}
 	// echo json_encode($data);
 
-	// } else { 
+	// } else {
 	// 	echo "ERROR no match";
 	// }
 }

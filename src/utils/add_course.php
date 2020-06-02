@@ -7,7 +7,7 @@ Last Update:
 */
 ini_set('display_errors', 1); error_reporting(-1);
 // include 'sql_settup.php';
-require_once "../../../../../tsugi/config.php";
+require_once "../../tsugi_config.php";
 
 use \Tsugi\Core\LTIX;
 

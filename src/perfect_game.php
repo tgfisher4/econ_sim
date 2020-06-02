@@ -12,7 +12,7 @@ Once submission is made, an overview of the past year's data is shown in a table
 Last Update: now using Tsugi WebSockets
 */
 include 'utils/sql_settup.php';
-require_once "../../tsugi/config.php";
+require_once "../tsugi_config.php";
 
 use \Tsugi\Core\LTIX;
 use Tsugi\Core\WebSocket;
@@ -51,7 +51,7 @@ $gameInfo = getGameInfo((int)$_GET['session']);
     		if (to_section == 'instructions') {
     			$('#beginModal').foundation('open');
     			return;
-    		} 
+    		}
 
     		var headers = {"dashboard_section": "Dashboard", "income_section": "Income Statement", "cost_section": "Cost Data", "industry_section": "Industry Data"};
     		var elements = document.getElementsByClassName("display_sections");
@@ -79,7 +79,7 @@ $gameInfo = getGameInfo((int)$_GET['session']);
   </head>
   <body style="background-color: #d3f6ff;">
 
-	<div class="off-canvas position-right" id="offCanvas" data-off-canvas data-transition="overlap" style="background-color: #121212"> 
+	<div class="off-canvas position-right" id="offCanvas" data-off-canvas data-transition="overlap" style="background-color: #121212">
 
 		<!-- Menu -->
 		<ul class="vertical menu darken" style="color: white">
@@ -162,10 +162,10 @@ $gameInfo = getGameInfo((int)$_GET['session']);
 		<input type="hidden" id="usrname" value="<?=$USER->email?>">
 		<input type="hidden" id="mode" value="<?=$gameInfo['mode']?>">
 
-		<div id="mainContent"> 
+		<div id="mainContent">
 
 			<!-- Dashboard -->
-			<div class="display_sections" id="dashboard_section"> 
+			<div class="display_sections" id="dashboard_section">
 				<div class="section_content" id="summarySection" style="display: none;">
 					<div class="section_cell" style="float: left;">
 						<h4 id="summaryYear" style="text-align: center; font-weight: 450">Summary for Year </h4>
@@ -472,7 +472,7 @@ $gameInfo = getGameInfo((int)$_GET['session']);
     	var graphLabels = ["Yr. 1", "Yr. 2", "Yr. 3", "Yr. 4", "Yr. 5", "Yr. 6", "Yr. 7", "Yr. 8", "Yr. 9", "Yr. 10", "Yr. 11", "Yr. 12", "Yr. 13",  "Yr. 14",  "Yr. 15",  "Yr. 16", "Yr. 17",  "Yr. 18",  "Yr. 19",  "Yr. 20",  "Yr. 21",  "Yr. 22",  "Yr. 23",  "Yr. 24",  "Yr. 25"];
     	let twentyFiveYrHist = graphLabels;
     	var histLabels = ["Yr. -4", "Yr. -3", "Yr. -2", "Yr. -1", "Yr. 0"];
-    	
+
 		var chartOptions = {
 			maintainAspectRatio: false,
 			scales: {
@@ -488,7 +488,7 @@ $gameInfo = getGameInfo((int)$_GET['session']);
     	// this is generated on admin side when session is toggled on so that all players have same price history
     	// retrieve price history from sql table w/ ajax
     	$.ajax({
-	  		url: "utils/game_util.php", 
+	  		url: "utils/game_util.php",
 	  		method: 'POST',
   			data: { action: 'getHistory', id: <?=$gameInfo['id']?> },
   			success: function(response) {
@@ -514,10 +514,10 @@ $gameInfo = getGameInfo((int)$_GET['session']);
 				    data: displayGenPriceData,
 				    options: chartOptions
 				});
-  			}	
+  			}
   		});
 
-		
+
 
 		// singleplayer submission occured
 		function getResults(quantity, prodLevel) {
@@ -546,7 +546,7 @@ $gameInfo = getGameInfo((int)$_GET['session']);
 				case 5:
 					totalCost = 0.025*Math.pow(quantity,3)-15*Math.pow(quantity,2)+23000*quantity+2500;
 					break;
-			} 
+			}
 
 			totalCost = parseInt(totalCost.toFixed(2));
 
@@ -643,7 +643,7 @@ $gameInfo = getGameInfo((int)$_GET['session']);
 
 			// call func to submit data in querry
 			$.ajax({
-		  		url: "utils/session.php", 
+		  		url: "utils/session.php",
 		  		method: 'POST',
 	  			data: { action: 'update_gameSessionData', groupId: groupId, username: $('#usrname').val(), opponent: null, quantity: quantity, revenue: revenue,
 	  				profit: profit, percentReturn: percentReturn.toPrecision(4), price: price, unitCost: marginalCost, totalCost: totalCost, complete: gameOver?1:0, gameId: <?= $gameInfo['id'] ?>  }
@@ -651,15 +651,15 @@ $gameInfo = getGameInfo((int)$_GET['session']);
 
 	  		// send message to tell instructor results to update
 			if (!broadcast_web_socket) {
-		  		broadcast_web_socket = tsugiNotifySocket(); 
-		  		broadcast_web_socket.onopen = function(evt) { 
+		  		broadcast_web_socket = tsugiNotifySocket();
+		  		broadcast_web_socket.onopen = function(evt) {
 					broadcast_web_socket.send($('#sessionId').val());
 				}
 			}
 			else
 				broadcast_web_socket.send($('#sessionId').val());
 
-				
+
 			// update industry data with averages of other students in same game
 			getIndustryData();
 		}
@@ -669,7 +669,7 @@ $gameInfo = getGameInfo((int)$_GET['session']);
 		function leaveGame() { // fires when one player hits exit game button in side menu
 			// remove student from gamesession table
 			$.ajax({
-		  		url: "utils/session.php", 
+		  		url: "utils/session.php",
 		  		method: 'POST',
 	  			data: { action: 'remove_student', id: $('#sessionId').val(), player: $('#usrname').val() }
 	  		});
@@ -687,7 +687,7 @@ $gameInfo = getGameInfo((int)$_GET['session']);
     	//---------------------------
     	var animated = [false,false,false];
     	var animatedB = [false,false,false,false];
-    	$(window).scroll(function() { 
+    	$(window).scroll(function() {
     	 	if(window.pageYOffset>70){
 		    	if ($('#dynamicHeader').text() == 'Income Statement' && !animated[0]) {
 		    		$('#animate0').addClass('animated flipInX').one('webkitAnimationEnd mozAnimationEnd', function() {
@@ -752,7 +752,7 @@ $gameInfo = getGameInfo((int)$_GET['session']);
 		    }
 		});
 		// --------------------------
-    	
+
 
 		function getIndustryData() {
 			// clear arrays
@@ -760,7 +760,7 @@ $gameInfo = getGameInfo((int)$_GET['session']);
 
         	// ajax to get data from sql for chart and table displays
         	$.ajax({
-		  		url: "utils/session.php", 
+		  		url: "utils/session.php",
 		  		method: 'POST',
 	  			data: { action: 'retrieve_gameSessionData', gameId: <?=$gameInfo['id']?>, valueType: selectedValType },
 	  			success: function(response) {
@@ -770,12 +770,12 @@ $gameInfo = getGameInfo((int)$_GET['session']);
 	  					// data for chart
 	  					indivData = json[i]['data'];
 	  					chartData.push(indivData);
-	  				} 
+	  				}
 
 		        	// to change raw chart data to the desired array of averages for each year
 		        	var counter = 0, i = 0, sum = 0;
 		        	while (i <= 20) { // loop a maximum of 20 times (the max number of years for game)
-		        		for (j = 0; j < chartData.length; j++) { // 
+		        		for (j = 0; j < chartData.length; j++) { //
 		        			sum += chartData[j][i];
 		        			counter++;
 		        		}
@@ -806,7 +806,7 @@ $gameInfo = getGameInfo((int)$_GET['session']);
 			getIndustryData();
 		}
 
-		function createIndustrySectionChart(data, valType) { 
+		function createIndustrySectionChart(data, valType) {
 
 			var fullDataObj = {
 		        labels: graphLabels,
@@ -854,9 +854,9 @@ $gameInfo = getGameInfo((int)$_GET['session']);
 	  var seconds = 0;
 	  var totalSeconds = $('#timer').attr('data-legnth')*60;
 	  var storeTotal = totalSeconds;
-	  
+
 	  var intervalId = null;
-	  
+
 	  function startTimer() {
 	    --totalSeconds;
 
@@ -867,10 +867,10 @@ $gameInfo = getGameInfo((int)$_GET['session']);
 	    	alertify.set('notifier','delay', 5);
 			alertify.set('notifier','position', 'top-right');
 			alertify.error('<i class="fas fa-exclamation-circle"></i><br><strong>Year: '+year+ ' - Time\'s Up!</strong><br>'+$("#quantity").val()+' was submitted.');
-			
+
 	    	clearInterval(intervalId);
 	    	$('#price_submit_btn').prop('disabled', true);
-	    	
+
 	    	submitResponse();
 	    }
 
@@ -954,7 +954,7 @@ $gameInfo = getGameInfo((int)$_GET['session']);
 		            data: profitHistory,
 		            backgroundColor: 'rgba(0, 153, 255, 0.2)',
 		            borderColor: 'rgba(0, 153, 255, 1)',
-		            borderWidth: 1	
+		            borderWidth: 1
 		        }];
 		    var usrCumulativeData = [{
 		            label: 'Your Revenue ($)',
@@ -977,7 +977,7 @@ $gameInfo = getGameInfo((int)$_GET['session']);
 		                'rgba(0, 153, 255,1)'
 		            ],
 		            borderWidth: 1
-		        }]; 
+		        }];
 		    var usrQuantityData = {
 				label: 'Your Sales (Units)',
 				data: quantityHistory,
@@ -1140,7 +1140,7 @@ $gameInfo = getGameInfo((int)$_GET['session']);
 			            borderColor: [
 			                'rgba(0,99,132,1)'
 			            ],
-			            borderWidth: 1	
+			            borderWidth: 1
 			        }]
 			    },
 			    options: chartOptions
@@ -1212,7 +1212,7 @@ $gameInfo = getGameInfo((int)$_GET['session']);
   		overflow-x: hidden;
   	}
 
-  	#mainContent { 
+  	#mainContent {
   		flex: 1 0 auto;
   		min-height: 300px;
   	}
@@ -1241,7 +1241,7 @@ $gameInfo = getGameInfo((int)$_GET['session']);
 	}
 	.cell_graph {
 		width: 550px;
-		height: 460px; 
+		height: 460px;
 	}
 	.graph {
 		width: 520px;
@@ -1292,7 +1292,7 @@ $gameInfo = getGameInfo((int)$_GET['session']);
 		width: 100%;
 		height: 150px;
 		background-color: #fcfcfc;
-		filter: drop-shadow(0px 3px 5px black); 
+		filter: drop-shadow(0px 3px 5px black);
 		position: fixed;
 		z-index: 2;
 		margin-top: 0px;
@@ -1336,7 +1336,7 @@ $gameInfo = getGameInfo((int)$_GET['session']);
 	.industrySectionCell {
 		filter: drop-shadow(3px 3px 5px black);
 		border-radius: 5px;
-		width: 80%; 
+		width: 80%;
 		height: 600px;
 		background-color: #fcfcfc;
 		margin: 0 auto 0 auto;
@@ -1362,7 +1362,7 @@ $gameInfo = getGameInfo((int)$_GET['session']);
 		height: 50px;
 		margin: auto;
 		background: linear-gradient(141deg, #0fb88a 20%, #0fb8ad 80%);
-		border-radius: 24px; 
+		border-radius: 24px;
 		color: white;
 	}
 	.cell > button:hover {

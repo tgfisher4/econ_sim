@@ -9,9 +9,9 @@ Initially shows "annual averages," which is table showing average quantities sub
 
 */
 
-ini_set('display_errors', 1); error_reporting(-1); 
+ini_set('display_errors', 1); error_reporting(-1);
 include 'utils/sql_settup.php';
-require_once "../../tsugi/config.php";
+require_once "../tsugi_config.php";
 
 use \Tsugi\Core\LTIX;
 use Tsugi\Core\WebSocket;
@@ -44,7 +44,7 @@ $gameInfo = getGameInfo((int)$selectedGame);
 
   <input type="hidden" id="id" value="<?=$gameInfo['id']?>">
   <input type="hidden" id="eq" value="<?=$gameInfo['equilibrium']?>">
-  
+
 			<!-- TITLE BAR -->
   	<div class="title-bar" style="background-color: #0a4c6d">
 	  <div class="title-bar-left">
@@ -134,9 +134,9 @@ $gameInfo = getGameInfo((int)$selectedGame);
     <script src="../js/node_modules/chart.js/dist/Chart.js"></script>
     <script type="text/javascript" src="https://cdn.datatables.net/v/zf/dt-1.10.18/b-1.5.2/sl-1.2.6/datatables.min.js"></script>
 	<script type="text/javascript">
-		broadcast_web_socket = tsugiNotifySocket(); 
-  		broadcast_web_socket.onmessage = function(evt) { 
-  			// check to see if message came from correct gameId, if so update results 
+		broadcast_web_socket = tsugiNotifySocket();
+  		broadcast_web_socket.onmessage = function(evt) {
+  			// check to see if message came from correct gameId, if so update results
   			if (evt.data=='<?=$gameInfo['id']?>') {
   				updateResults();
   			}
@@ -154,7 +154,7 @@ $gameInfo = getGameInfo((int)$selectedGame);
 		// (populates the graph and chart on intial page load as well as refreshes)
 		updateResults();
 
-		/* 
+		/*
 		\\\\when a student submits quantity from gaim_main.php////
 		- tableData contains the data for table under "Individual Submissions" tab
 		- tableData is an array of arrays - Nested arrays: first element is username, subsequent elements are data
@@ -175,7 +175,7 @@ $gameInfo = getGameInfo((int)$selectedGame);
 
         	// ajax to get data from sql for chart and table displays
         	$.ajax({
-		  		url: "utils/session.php", 
+		  		url: "utils/session.php",
 		  		method: 'POST',
 	  			data: { action: 'retrieve_gameSessionData', gameId: <?=$gameInfo['id']?>, valueType: selectedValType },
 	  			success: function(response) {
@@ -195,7 +195,7 @@ $gameInfo = getGameInfo((int)$selectedGame);
 
 	        			indivData = [];
 
-	  				} 
+	  				}
 
 	  				// create table
 		        	tableCallback(tableData);
@@ -203,7 +203,7 @@ $gameInfo = getGameInfo((int)$selectedGame);
 		        	// to change raw chart data to the desired array of averages for each year
 		        	var counter = 0, i = 0, sum = 0;
 		        	while (i <= 20) { // loop a maximum of 20 times (the max number of years for game)
-		        		for (j = 0; j < chartData.length; j++) { // 
+		        		for (j = 0; j < chartData.length; j++) { //
 		        			sum += chartData[j][i];
 		        			counter++;
 		        		}
@@ -242,11 +242,11 @@ $gameInfo = getGameInfo((int)$selectedGame);
 			$('#indivButton').css('background-color','#767676');
 			$('#'+section+'Button').css('background-color','#1779ba');
 		}
-		
-		var columns = [{ title: "Yr. 1" },{ title: "Yr. 2" },{ title: "Yr. 3" },{ title: "Yr. 4" },{ title: "Yr. 5" },{ title: "Yr. 6" },{ title: "Yr. 7" }, { title: "Yr. 8" },{ title: "Yr. 9" },{ title: "Yr. 10" }, { title: "Yr. 11" }, { title: "Yr. 12" }, { title: "Yr. 13" },  { title: "Yr. 14" },  { title: "Yr. 15" }, { title: "Yr. 16" }, { title: "Yr. 17" }, { title: "Yr. 18" }, { title: "Yr. 19" }, { title: "Yr. 20" }, { title: "Yr. 21" }, { title: "Yr. 22" }, { title: "Yr. 23" }, { title: "Yr. 24" }, { title: "Yr. 25" }];
-		columns = columns.splice(0, $('#numRounds').val()); 
 
-		if ('<?=$gameInfo["market_struct"]?>'=='oligopoly') 
+		var columns = [{ title: "Yr. 1" },{ title: "Yr. 2" },{ title: "Yr. 3" },{ title: "Yr. 4" },{ title: "Yr. 5" },{ title: "Yr. 6" },{ title: "Yr. 7" }, { title: "Yr. 8" },{ title: "Yr. 9" },{ title: "Yr. 10" }, { title: "Yr. 11" }, { title: "Yr. 12" }, { title: "Yr. 13" },  { title: "Yr. 14" },  { title: "Yr. 15" }, { title: "Yr. 16" }, { title: "Yr. 17" }, { title: "Yr. 18" }, { title: "Yr. 19" }, { title: "Yr. 20" }, { title: "Yr. 21" }, { title: "Yr. 22" }, { title: "Yr. 23" }, { title: "Yr. 24" }, { title: "Yr. 25" }];
+		columns = columns.splice(0, $('#numRounds').val());
+
+		if ('<?=$gameInfo["market_struct"]?>'=='oligopoly')
 			columns = [{ title: "Student" }, { title: "Group" }].concat(columns)
 		else
 			columns = [{ title: "Student" }].concat(columns)
@@ -291,11 +291,11 @@ $gameInfo = getGameInfo((int)$selectedGame);
 			    }
 			} );
 		}
-		
+
 		var graphLabels = ["Yr. 1", "Yr. 2", "Yr. 3", "Yr. 4", "Yr. 5", "Yr. 6", "Yr. 7", "Yr. 8", "Yr. 9", "Yr. 10", "Yr. 11", "Yr. 12", "Yr. 13",  "Yr. 14",  "Yr. 15",  "Yr. 16", "Yr. 17",  "Yr. 18",  "Yr. 19",  "Yr. 20",  "Yr. 21",  "Yr. 22",  "Yr. 23",  "Yr. 24",  "Yr. 25"];
 		graphLabels = graphLabels.splice(0, $('#numRounds').val());
 
-		function graphCallback(data, eq, valType) { 
+		function graphCallback(data, eq, valType) {
 			// valType used to check if selected value is quantity. if so show equilibrium on chart. hide otherwise..
 			var equilibrium = new Array(20).fill(eq);
 
@@ -342,7 +342,7 @@ $gameInfo = getGameInfo((int)$selectedGame);
 			const equilibrium = new Array(20).fill($('#eq').val()).splice(0, $('#numRounds').val());
 
 			// create data object based on number of selected students (1 or 2)
-			if (count == 1) 
+			if (count == 1)
 				var dataObj = {
 				        labels: graphLabels,
 				        datasets: [{
@@ -437,7 +437,7 @@ $gameInfo = getGameInfo((int)$selectedGame);
         	}
 
         	$.ajax({
-		  		url: "utils/session.php", 
+		  		url: "utils/session.php",
 		  		method: 'POST',
 	  			data: { action: 'retrieve_gameSessionData', gameId: <?=$gameInfo['id']?>, valueType: selectedValType },
 	  			success: function(response) {
@@ -458,7 +458,7 @@ $gameInfo = getGameInfo((int)$selectedGame);
 
 	        			indivData = [];
 
-	  				} 
+	  				}
 
 	  				// create table
 		        	tableCallback(tableData);
@@ -466,7 +466,7 @@ $gameInfo = getGameInfo((int)$selectedGame);
 		        	// to change raw chart data to the desired array of averages for each year
 		        	var counter = 0, i = 0, sum = 0;
 		        	while (i <= 20) { // loop a maximum of 20 times (the max number of years for game)
-		        		for (j = 0; j < chartData.length; j++) { // 
+		        		for (j = 0; j < chartData.length; j++) { //
 		        			sum += chartData[j][i];
 		        			counter++;
 		        		}
@@ -518,7 +518,7 @@ $gameInfo = getGameInfo((int)$selectedGame);
 		.mainContent {
 			filter: drop-shadow(3px 3px 5px black);
 			border-radius: 5px;
-			width: 1200px; 
+			width: 1200px;
 			background-color: #fcfcfc;
 			margin: 0 auto 0 auto;
 		}
@@ -540,7 +540,7 @@ $gameInfo = getGameInfo((int)$selectedGame);
 			height: 50px;
 			margin: auto;
 			background: linear-gradient(141deg, #0fb88a 20%, #0fb8ad 80%);
-			border-radius: 24px; 
+			border-radius: 24px;
 			color: white;
 		}
 		.cell > button:hover {
