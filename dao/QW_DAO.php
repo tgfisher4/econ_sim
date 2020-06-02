@@ -55,14 +55,14 @@ class QW_DAO {
         $arr = array(':id' => $id);
         return $this->PDOX->rowDie($query, $arr);
     }
- 
+
     function gameExists($id) {
         $query = "SELECT live, market_struct FROM {$this->p}games WHERE id = :id;";
         $arr = array(':id' => $id);
         return $this->PDOX->rowDie($query, $arr);
     }
 
-    function playerCompletedGame($player) { 
+    function playerCompletedGame($player) {
         $query = "SELECT complete FROM {$this->p}gameSessionData WHERE player = :player LIMIT 1;";
         $arr = array(':player' => $player);
         return $this->PDOX->rowDie($query, $arr)["complete"];
@@ -120,7 +120,7 @@ class QW_DAO {
     function retrieveSessionData($val, $gameId, $groupId, $usr) {
         $query = "SELECT player, groupId, :val FROM {$this->p}gameSessionData WHERE gameId = :gmId;";
         $arr = array(':gmId' => $gameId);
-        
+
         $data=[];
         foreach ($this->PDOX->rowDie($query, $arr) as $row) {
             $splitData = array_map('intval', explode(',', $row[$_POST['valueType']]));
@@ -157,7 +157,7 @@ class QW_DAO {
             $query = "UPDATE {$this->p}sessions SET p1= :username, p1Data= :quantity WHERE id = :id;";
             $arr = array(':quantity' => $quantity, ':id' => $session['id']);
             $this->PDOX->rowDie($query, $arr);
-        } 
+        }
         else {
             $query = "UPDATE {$this->p}sessions SET p1= :username, p1Data= :quantity WHERE id = :id;";
             $arr = array(':quantity' => $quantity, ':id' => $session['id']);
@@ -198,7 +198,7 @@ class QW_DAO {
     }
 
     function getGames($course) {
-        $query = "SELECT * FROM {$this->p}games WHERE course= :course;";
+        $query = "SELECT * FROM {$this->p}games WHERE course_id= :course;";
         $arr = array(':course' => $course);
         return $this->PDOX->allRowsDie($query,$arr);
     }

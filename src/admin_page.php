@@ -582,10 +582,10 @@ Initially displays courses view. This view displays an instructors saved courses
 
     	// when a course or game is selected, add the appropriate id to the query string, causing the screen's content to change accordingly
     	function course_selected(course) {
-    		window.location.search = "course="+course;
+    		window.location = "<?= addSession('admin_page.php') ?>" + "&course="+course;
     	}
     	function game_selected(game) {
-    		window.location.search = "game="+game;
+    		window.location.search = "<?= addSession('admin_page.php') ?>" + "&game="+game;
     	}
 
     	function game_transitions() { // fade transitions to show saved games
