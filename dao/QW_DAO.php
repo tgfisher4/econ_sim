@@ -13,7 +13,7 @@ class QW_DAO {
 
     function addCourse($admin, $courseName, $section, $icon) {
         $query = "INSERT INTO {$this->p}courses (name, section, owner, avatar) VALUES (:name, :section, :owner, :avatar)";
-        $arr = array(':name' => $admin, ':section' => $section, ':owner' => $admin, ':avatar' => $icon);
+        $arr = array(':name' => $courseName, ':section' => $section, ':owner' => $admin, ':avatar' => $icon);
         $this->PDOX->queryDie($query, $arr);
     }
 
@@ -31,16 +31,36 @@ class QW_DAO {
         $arr = array(':id' => $id, ':eq' => $eq);
         $this->PDOX->queryDie($query, $arr);
     }
-
+/*
     function addGame($name, $diff, $mode, $market_struct, $macro_econ, $limit, $numRounds, $intercept, $slope, $fixed, $cons, $maxq) {
         $query = "INSERT INTO {$this->p}games (name, difficulty, mode, market_struct, macro_econ, time_limit, num_rounds. demand_intercept, demand_slope, fixed_cost, const_cost, max_quantity) VALUES (:name, :diff, :mode, :market, :macro_econ, :lim, :rounds, :intercept, :slope, :fixed, :const_cost, :max)";
         $arr = array(':name'=>$name, ':diff'=>$diff, ':mode'=>$mode, ':market'=>$market_struct, ':macro_econ'=>$macro_econ, ':lim'=>$limit, ':rounds'=>$numRounds, ':intercept'=>$intercept, ':slope'=>$slope, ':fixed'=>$fixed, ':const_cost'=>$cons, ':max'=>$maxq);
         $this->PDOX->queryDie($query, $arr);
     }
+*/
+    function addGame($name, $type, $course_id, $diff, $mode, $market_struct, $macro_econ, $limit, $numRounds, $intercept, $slope, $fixed, $cons, $maxq) {
+        $query = "INSERT INTO {$this->p}games (name, type, course_id, difficulty, mode, market_struct, macro_econ, time_limit, num_rounds, demand_intercept, demand_slope, fixed_cost, const_cost, max_quantity)
+                  VALUES (:name, :type, :course_id, :diff, :mode, :market, :macro_econ, :lim, :rounds, :intercept, :slope, :fixed, :const_cost, :max_quantity)";
+        $arr = array(':name'        => $name,
+                     ':type'        => $type,
+                     ':course_id'   => $course_id,
+                     ':diff'        => $diff,
+                     ':mode'        => $mode,
+                     ':market'      => $market_struct,
+                     ':macro_econ'  => $macro_econ,
+                     ':lim'         => $limit,
+                     ':rounds'      => $numRounds,
+                     ':intercept'   => $intercept,
+                     ':slope'       => $slope,
+                     ':fixed'       => $fixed,
+                     ':const_cost'  => $cons,
+                     ':max_quantity'=> $maxq);
+        $this->PDOX->queryDie($query, $arr);
+    }
 
     function updateGame($name, $diff, $mode, $market_struct, $macro_econ, $limit, $numRounds, $intercept, $slope, $fixed, $cons, $maxq, $id) {
         $query = "UPDATE {$this->p}games SET name = :name, difficulty = :diff, mode = :mode, market_struct = :market, macro_econ = :macro_econ, time_limit = :lim, num_rounds = :rounds, demand_intercept = :intercept, demand_slope = :slope, fixed_cost = :fixed, const_cost = :const_cost, max_quantity = :max WHERE course_id = :id";
-        $arr = array(':name'=>$name, ':diff'=>$diff, ':mode'=>$mode, ':market'=>$market_struct, ':macro_econ'=>$macro_econ, ':lim'=>$limit, ':rounds'=>$numRounds, ':intercept'=>$intercept, ':slope'=>$slope, ':fixed'=>$fixed, ':const_cost'=>$cons, ':max'=>$maxq, ':id'=>$id);
+        $arr = array(':name'=>$name, ':diff'=>$diff, ':mode'=>$mode, ':market'=>$market_struct, ':macro_econ'=>$macro_econ, ':lim'=>$limit, ':rounds'=>$numRounds, ':intercept'=>$intercept, ':slope'=>$slope, ':fixed'=>$fixed, ':const_cost'=>$cons, ':id'=>$id);
         $this->PDOX->queryDie($query, $arr);
     }
 
@@ -212,7 +232,7 @@ class QW_DAO {
     function sessionIsLive($id) {
         $query = "SELECT live FROM {$this->p}games WHERE id= :id LIMIT 1;";
         $arr = array(":id"=>$id);
-        $result=- $this->PDOX->rowDie($query,$arr);
+        $result= $this->PDOX->rowDie($query,$arr);
         return $result['live'];
     }
 

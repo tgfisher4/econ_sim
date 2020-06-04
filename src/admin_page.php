@@ -96,7 +96,7 @@ Initially displays courses view. This view displays an instructors saved courses
 	<!-- end title bar -->
 
 	<!-- if on games view or individual game view, display a back button -->
-	<button id="backButton" class="secondary button" style="float: left;" onclick="window.location = window.location.origin+window.location.pathname+'<?= $gameInfo ? "?course=".$gameInfo["course_id"] : "" ?>'">
+	<button id="backButton" class="secondary button" style="float: left;" onclick="window.location = '<?= addSession("admin_page.php") . ($gameInfo ? "&course=".$gameInfo["course_id"] : "") ?>'">
 		<i class="fas fa-angle-left"></i> Back
 	</button>
 
@@ -585,7 +585,7 @@ Initially displays courses view. This view displays an instructors saved courses
     		window.location = "<?= addSession('admin_page.php') ?>" + "&course="+course;
     	}
     	function game_selected(game) {
-    		window.location.search = "<?= addSession('admin_page.php') ?>" + "&game="+game;
+    		window.location = "<?= addSession('admin_page.php') ?>" + "&game="+game;
     	}
 
     	function game_transitions() { // fade transitions to show saved games

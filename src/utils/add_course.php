@@ -40,8 +40,9 @@ else {
 			while ($row = $result->fetch_assoc())
 				$mysqli->query("DELETE FROM Games WHERE id=".$row['id']);
 
-		header("Location: ../../src/admin_page.php");
+		//header("Location: ../../src/admin_page.php");
 	}
 	else
 	    echo "Error: " . $delete_sql . "<br>" . $mysqli->error;
 }
+header("Location: " .addSession("../admin_page.php"));

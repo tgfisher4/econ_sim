@@ -53,13 +53,28 @@ else if (isset($_POST['mode']) && isset($_POST['difficulty']) && isset($_POST['m
 		//     echo "Error: " . $sql . "<br>" . $mysqli->error;
 	}
 	else {
-		$QW_DAO->addGame($_POST['gameName'],$_POST['difficulty'],$_POST['mode'],$_POST['market_struct'],$_POST['macroEconomy'],$_POST['limit'],$_POST['numRounds'],$_POST['demand_intercept'],$max);
+		//$QW_DAO->addGame($_POST['gameName'],$_POST['difficulty'],$_POST['mode'],$_POST['market_struct'],$_POST['macroEconomy'],$_POST['limit'],$_POST['numRounds'],$_POST['demand_intercept'],$max);
+		$QW_DAO->addGame($_POST['gameName'],
+						 $_POST['type'],
+						 $_POST['course_id'],
+						 $_POST['difficulty'],
+						 $_POST['mode'],
+						 $_POST['market_struct'],
+						 $_POST['macroEconomy'],
+						 $_POST['limit'],
+						 $_POST['numRounds'],
+						 $_POST['demand_intercept'],
+					 	 $_POST['demand_slope'],
+					 	 $_POST['fixed_cost'],
+					 	 $_POST['const_cost'],
+					 	 $max);
 		// $sql = "INSERT INTO Games (name, type, course_id, difficulty, mode, market_struct, macro_econ, time_limit, num_rounds, demand_intercept, demand_slope, fixed_cost, const_cost, max_quantity)
 		// VALUES ('".mysqli_real_escape_string($mysqli, $_POST['gameName'])."', '".$_POST['type']."', '".$_POST['course_id']."', '".$_POST['difficulty']."', '".$_POST['mode']."', '".$_POST['market_struct']."', '".$_POST['macroEconomy']."', '".$_POST['limit']."', '".$_POST['numRounds']."', '".$_POST['demand_intercept']."', '".$_POST['demand_slope']."', '".$_POST['fixed_cost']."', '".$_POST['const_cost']."', '".$max."')";
 		// if ($mysqli->query($sql) === TRUE)
 		// 	header("Location: ../../src/admin_page.php?course=".$_POST['course_id']);
 		// else
 		//     echo "Error: " . $sql . "<br>" . $mysqli->error;
+		header("Location: " . addSession("../admin_page.php?course=".$_POST['course_id']));
 	}
 }
 
