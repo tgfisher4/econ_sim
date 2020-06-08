@@ -44,8 +44,20 @@ else if (isset($_POST['mode']) && isset($_POST['difficulty']) && isset($_POST['m
 	}
 
 	// check if game already exists, if so, update rather than create new
-	if ($_POST['gameId']) {
-		$QW_DAO->updateGame($_POST['gameName'],$_POST['difficulty'],$_POST['mode'],$_POST['market_struct'],$_POST['macroEconomy'],$_POST['limit'],$_POST['numRounds'],$_POST['demand_intercept'],$max, $_POST['course_id']);
+	if ($_POST['game_id']) {
+		$QW_DAO->updateGame($_POST['game_id'],
+							$_POST['gameName'],
+							$_POST['difficulty'],
+							$_POST['mode'],
+							$_POST['market_struct'],
+							$_POST['macroEconomy'],
+							$_POST['limit'],
+							$_POST['numRounds'],
+							$_POST['demand_intercept'],
+							$_POST['demand_slope'],
+							$_POST['fixed_cost'],
+							$_POST['const_cost'],
+							$max);
 		// $sql = "UPDATE Games SET name='".mysqli_real_escape_string($mysqli, $_POST['gameName'])."', difficulty='".$_POST['difficulty']."', mode='".$_POST['mode']."', market_struct='".$_POST['market_struct']."', macro_econ='".$_POST['macroEconomy']."', time_limit='".$_POST['limit']."', num_rounds='".$_POST['numRounds']."', demand_intercept='".$_POST['demand_intercept']."', demand_slope='".$_POST['demand_slope']."', fixed_cost='".$_POST['fixed_cost']."', const_cost='".$_POST['const_cost']."', max_quantity='".$max."' WHERE course_id=".$_POST['course_id'];
 		// if ($mysqli->query($sql) === TRUE)
 		// 	header("Location: ../../src/admin_page.php?game=".$_POST['gameId']);
@@ -68,19 +80,22 @@ else if (isset($_POST['mode']) && isset($_POST['difficulty']) && isset($_POST['m
 					 	 $_POST['fixed_cost'],
 					 	 $_POST['const_cost'],
 					 	 $max);
+
+		echo "Added game";
 		// $sql = "INSERT INTO Games (name, type, course_id, difficulty, mode, market_struct, macro_econ, time_limit, num_rounds, demand_intercept, demand_slope, fixed_cost, const_cost, max_quantity)
 		// VALUES ('".mysqli_real_escape_string($mysqli, $_POST['gameName'])."', '".$_POST['type']."', '".$_POST['course_id']."', '".$_POST['difficulty']."', '".$_POST['mode']."', '".$_POST['market_struct']."', '".$_POST['macroEconomy']."', '".$_POST['limit']."', '".$_POST['numRounds']."', '".$_POST['demand_intercept']."', '".$_POST['demand_slope']."', '".$_POST['fixed_cost']."', '".$_POST['const_cost']."', '".$max."')";
 		// if ($mysqli->query($sql) === TRUE)
 		// 	header("Location: ../../src/admin_page.php?course=".$_POST['course_id']);
 		// else
 		//     echo "Error: " . $sql . "<br>" . $mysqli->error;
-		header("Location: " . addSession("../admin_page.php?course=".$_POST['course_id']));
+
 	}
 }
 
 // Delete game
-else if (isset($_POST['deleteId']) && isset($_POST['deletedGameCourse'])) {
-	$QW_DAO->deleteGame($_POST['deleteId']);
+else if (isset($_POST['delete_game_id'])){// && isset($_POST['course_id'])) {
+	$QW_DAO->deleteGame($_POST['delete_game_id']);
+	//header("Location: " . addSession("../admin_page.php?course=".$_POST['course_id']));
 
 	// $delete_sql = "DELETE FROM Games WHERE id='".$_POST['deleteId']."'";
 
@@ -94,3 +109,4 @@ else if ($_POST['action']=='getHistory') {
 	// $result = $mysqli->query('SELECT price_hist FROM Games WHERE id="'.$_POST["id"].'"');
 	// echo $result->fetch_assoc()['price_hist'];
 }
+header("Location: " . addSession("../admin_page.php?course=".$_POST['course_id']));

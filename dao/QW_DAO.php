@@ -23,7 +23,7 @@ class QW_DAO {
         $this->PDOX->queryDie($query, $arr);
 
         $query = "DELETE FROM {$this->p}games WHERE course_id = :id";
-        $this->PDOX->rowDie($query, $arr);
+        $this->PDOX->queryDie($query, $arr);
     }
 
     function saveEquilibrium($id, $eq) {
@@ -58,9 +58,24 @@ class QW_DAO {
         $this->PDOX->queryDie($query, $arr);
     }
 
-    function updateGame($name, $diff, $mode, $market_struct, $macro_econ, $limit, $numRounds, $intercept, $slope, $fixed, $cons, $maxq, $id) {
-        $query = "UPDATE {$this->p}games SET name = :name, difficulty = :diff, mode = :mode, market_struct = :market, macro_econ = :macro_econ, time_limit = :lim, num_rounds = :rounds, demand_intercept = :intercept, demand_slope = :slope, fixed_cost = :fixed, const_cost = :const_cost, max_quantity = :max WHERE course_id = :id";
-        $arr = array(':name'=>$name, ':diff'=>$diff, ':mode'=>$mode, ':market'=>$market_struct, ':macro_econ'=>$macro_econ, ':lim'=>$limit, ':rounds'=>$numRounds, ':intercept'=>$intercept, ':slope'=>$slope, ':fixed'=>$fixed, ':const_cost'=>$cons, ':id'=>$id);
+    function updateGame($game_id, $name, $diff, $mode, $market_struct, $macro_econ, $limit, $numRounds, $intercept, $slope, $fixed, $cons, $maxq) {
+        $query = "UPDATE {$this->p}games SET name = :name, difficulty = :diff, mode = :mode, market_struct = :market, macro_econ = :macro_econ,
+                                             time_limit = :lim, num_rounds = :rounds, demand_intercept = :intercept, demand_slope = :slope, fixed_cost = :fixed,
+                                             const_cost = :const_cost, max_quantity = :max
+                  WHERE id = :game_id";
+        $arr = array(':name'        => $name,
+                     ':diff'        => $diff,
+                     ':mode'        => $mode,
+                     ':market'      => $market_struct,
+                     ':macro_econ'  => $macro_econ,
+                     ':lim'         => $limit,
+                     ':rounds'      => $numRounds,
+                     ':intercept'   => $intercept,
+                     ':slope'       => $slope,
+                     ':fixed'       => $fixed,
+                     ':const_cost'  => $cons,
+                     ':max'         => $maxq,
+                     ':game_id'     => $game_id);
         $this->PDOX->queryDie($query, $arr);
     }
 

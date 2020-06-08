@@ -25,10 +25,12 @@ if (isset($_POST['name']) && isset($_POST['section']) && isset($_POST['avatar'])
 	$QW_DAO->addCourse($USER->email, $_POST['name'], $_POST['section'],$_POST['avatar']);
 }
 	// Delete existing course and its games
-else {
-	$QW_DAO->addCourse($_POST['nadeleteIdme']);
+else if (isset($_POST['delete_course_id'])){
+	//$QW_DAO->addCourse($_POST['nadeleteIdme']);
 
-	$delete_sql = "DELETE FROM Courses WHERE id=".$_POST['deleteId'];
+	$QW_DAO->deleteCourse($_POST['delete_course_id']);
+	/*
+	$delete_sql = "DELETE FROM Courses WHERE id=".$_POST['delete_course_id'];
 
 	// Delete the course
 	if ($mysqli->query($delete_sql) === TRUE) {
@@ -44,5 +46,7 @@ else {
 	}
 	else
 	    echo "Error: " . $delete_sql . "<br>" . $mysqli->error;
+
+	*/
 }
 header("Location: " .addSession("../admin_page.php"));

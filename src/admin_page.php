@@ -109,7 +109,7 @@ Initially displays courses view. This view displays an instructors saved courses
 				<i class="grow fas fa-trash fa-2x" style="float: right; margin-left: 40px"></i>
 			</a>
 			<form id="deleteCourseForm" method="post" action="utils/add_course.php">
-				<input type="hidden" name="deleteId" value="<?= isset($_GET['course'])?$_GET['course']:NULL ?>">
+				<input type="hidden" name="delete_course_id" value="<?= isset($_GET['course'])?$_GET['course']:NULL ?>">
 			</form>
 			<a id="addNewModal">
 				<i class="grow fas fa-plus fa-2x" style="float: right;"></i>
@@ -224,8 +224,8 @@ Initially displays courses view. This view displays an instructors saved courses
 					<h4 class="mode_options_content" style="font-weight: 300">Delete Game</h4>
 				</div>
 				<form id="deleteForm" method="post" action="utils/game_util.php">
-					<input type="hidden" name="deleteId" value="<?= $gameInfo['id'] ?>">
-					<input type="hidden" name="deletedGameCourse" value="<?= $gameInfo['course_id'] ?>">
+					<input type="hidden" name="delete_game_id" value="<?= $gameInfo['id'] ?>">
+					<input type="hidden" name="course_id" value="<?= $gameInfo['course_id'] ?>">
 				</form>
 			</div>
 		</div>
@@ -502,7 +502,7 @@ Initially displays courses view. This view displays an instructors saved courses
 				<!-- hidden inputs for new game modal - above button groups correspond to an input for saving to mysql entry for game -->
 				<form id="newGameForm" method="post" action="utils/game_util.php">
 					<input type="hidden" name="gameName" id="gameName">
-					<input type="hidden" name="type" id="type">
+					<input type="hidden" name="type" id="type" value="<?= $gameInfo ? $gameInfo['type'] : ''?>">
 					<input type="hidden" name="mode" id="mode" value="<?= $gameInfo ? $gameInfo['mode'] : ''?>">
 					<input type="hidden" name="difficulty" id="diff" value="<?= $gameInfo ? $gameInfo['difficulty'] : ''?>">
 					<input type="hidden" name="market_struct" id="marStr" value="<?= $gameInfo ? $gameInfo['market_struct'] : ''?>">
@@ -514,7 +514,7 @@ Initially displays courses view. This view displays an instructors saved courses
 					<input type="hidden" name="fixed_cost" id="fCost">
 					<input type="hidden" name="const_cost" id="cCost">
 					<input type="hidden" name="course_id" value="<?= isset($_GET['course']) ? $_GET['course'] : $gameInfo['course_id'] ?>">
-					<input type="hidden" name="gameId" value="<?= isset($_GET['game']) ? $_GET['game'] : NULL ?>">
+					<input type="hidden" name="game_id" value="<?= isset($_GET['game']) ? $_GET['game'] : NULL ?>">
 					<div style="width: 250px; margin: 0 auto 0 auto">
 						<button type="button" class="button success" style="width: 250px; height: 100px; border-radius: 5px;" onclick="createGame()"><h4 style="color: white"><i class="fas fa-save"></i> <strong>Save Game </strong></h4></button>
 					</div>
