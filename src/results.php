@@ -10,13 +10,18 @@ Initially shows "annual averages," which is table showing average quantities sub
 */
 
 ini_set('display_errors', 1); error_reporting(-1);
-include 'utils/sql_settup.php';
+//include 'utils/sql_settup.php';
 require_once "../tsugi_config.php";
+require_once "../dao/QW_DAO.php";
 
 use \Tsugi\Core\LTIX;
-use Tsugi\Core\WebSocket;
+use \Tsugi\Core\WebSocket;
+use \QW\DAO\QW_DAO;
 
 $LAUNCH = LTIX::session_start();
+
+$p = $CFG->dbprefix . "econ_sim_";
+$QW_DAO = new QW_DAO($PDOX, $p);
 // Render view
 $OUTPUT->header();
 
@@ -25,7 +30,7 @@ if (!$USER->instructor)
 
 $selectedGame = $_GET['game'];
 
-$gameInfo = getGameInfo((int)$selectedGame);
+$gameInfo = $QW_DAO->getGameInfo($selectedGame);
 ?>
 
 <!doctype html>
@@ -42,7 +47,7 @@ $gameInfo = getGameInfo((int)$selectedGame);
   </head>
   <body style="background-color: #d3f6ff;">
 
-  <input type="hidden" id="id" value="<?=$gameInfo['id']?>">
+  <input type="hidden" id="game_id" value="<?=$gameInfo['game_id']?>">
   <input type="hidden" id="eq" value="<?=$gameInfo['equilibrium']?>">
 
 			<!-- TITLE BAR -->
@@ -71,7 +76,7 @@ $gameInfo = getGameInfo((int)$selectedGame);
 	</div>
 	<!-- end title bar -->
 	<div style="background-color: #fcfcfc; width: 100%; height: 40px; margin-bottom: 50px">
-		<button id="backButton" class="secondary button" style="float: left; margin-right: 20px" onclick="redirectAdimn(<?=$selectedGame?>)">
+		<button id="backButton" class="secondary button" style="float: left; margin-right: 20px" onclick="redirectAdmin(<?=$selectedGame?>)">
 			<i class="fas fa-angle-left"></i> Back
 		</button>
 		<div class="navButtons">
@@ -118,7 +123,7 @@ $gameInfo = getGameInfo((int)$selectedGame);
 
 	<!-- hidden inputs for javasctipt -->
 	<input id="numRounds" type="hidden" value="<?=$gameInfo['num_rounds']?>">
-	<input id="gameId" type="hidden" value="<?=$gameInfo['id']?>">
+	<input id="gameId" type="hidden" value="<?=$gameInfo['game_id']?>">
 
 	<!-- Bottom bar -->
 	<footer class="footer"></footer>
@@ -137,7 +142,7 @@ $gameInfo = getGameInfo((int)$selectedGame);
 		broadcast_web_socket = tsugiNotifySocket();
   		broadcast_web_socket.onmessage = function(evt) {
   			// check to see if message came from correct gameId, if so update results
-  			if (evt.data=='<?=$gameInfo['id']?>') {
+  			if (evt.data=='<?=$gameInfo['game_id']?>') {
   				updateResults();
   			}
 	    };
@@ -175,10 +180,11 @@ $gameInfo = getGameInfo((int)$selectedGame);
 
         	// ajax to get data from sql for chart and table displays
         	$.ajax({
-		  		url: "utils/session.php",
+		  		url: "<?= addSession("utils/session.php") ?>",
 		  		method: 'POST',
-	  			data: { action: 'retrieve_gameSessionData', gameId: <?=$gameInfo['id']?>, valueType: selectedValType },
+	  			data: { action: 'retrieve_game_results', gameId: <?=$gameInfo['game_id']?>, valueType: selectedValType },
 	  			success: function(response) {
+					console.log(response);
 	  				var json = JSON.parse(response);
 
 	  				for (var i=0; i < Object.keys(json).length; i++) {
@@ -414,9 +420,9 @@ $gameInfo = getGameInfo((int)$selectedGame);
 		}
 
 		// on backbutton press
-		function redirectAdimn(game) {
+		function redirectAdmin(game) {
 			urlPrefix = window.location.href.substr(0, window.location.href.indexOf('src'));
-			window.location=urlPrefix+'src/admin_page.php?game='+game;
+			window.location = "<?= addSession('admin_page.php') ?>" + '&game='+game;
 		}
 
 		// handler for value selector buttons on individual submissions section
@@ -437,11 +443,12 @@ $gameInfo = getGameInfo((int)$selectedGame);
         	}
 
         	$.ajax({
-		  		url: "utils/session.php",
+		  		url: "<?= addSession("utils/session.php") ?>",
 		  		method: 'POST',
-	  			data: { action: 'retrieve_gameSessionData', gameId: <?=$gameInfo['id']?>, valueType: selectedValType },
+	  			data: { action: 'retrieve_game_results', gameId: <?=$gameInfo['game_id']?>, valueType: selectedValType },
 	  			success: function(response) {
 	  				var json = JSON.parse(response);
+					console.log(response);
 
 	  				// clear arrays
 	  				chartData=[];tableData=[];indivData=[];averages=[];

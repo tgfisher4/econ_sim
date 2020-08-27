@@ -16,7 +16,7 @@ $LAUNCH = LTIX::session_start();
 require_once('../../dao/QW_DAO.php');
 use \QW\DAO\QW_DAO;
 
-$p = $CFG->dbprefix;
+$p = $CFG->dbprefix . "econ_sim_";
 $QW_DAO = new QW_DAO($PDOX, $p);
 
 

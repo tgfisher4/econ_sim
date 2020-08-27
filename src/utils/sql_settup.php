@@ -1,14 +1,14 @@
 <?php
 /* sql_settup.php
 
-- Contains initial setup for the mysql tables in database. Commented out after the first run. 
+- Contains initial setup for the mysql tables in database. Commented out after the first run.
 - Below are a handfull of utility functions relating to the mysql database.
 
-GameSessionData holds the data for each round for every student. Each student will have their own row for each game that they play. The Sessions table is used to help with multi player games, there will be one row for a session (not for each student) - this table simply holds the groupId and the two players 
+GameSessionData holds the data for each round for every student. Each student will have their own row for each game that they play. The Sessions table is used to help with multi player games, there will be one row for a session (not for each student) - this table simply holds the groupId and the two players
 
 Last Update:
 8.1.18
-Add Sessions table 
+Add Sessions table
 */
 
 // DEFINE('DB_USERNAME', 'root');
@@ -103,9 +103,13 @@ global $CFG, $PDOX;
 // We are being included from src/
 require_once('../dao/QW_DAO.php');
 
+use \Tsugi\Core\LTIX;
 use \QW\DAO\QW_DAO;
 
-$p = $CFG->dbprefix;
+$LAUNCH = LTIX::session_start();
+
+
+$p = $CFG->dbprefix . "econ_sim_";
 $QW_DAO = new QW_DAO($PDOX, $p);
 
 // Get instructor's saved courses from Courses table
@@ -123,7 +127,7 @@ function getCourseNameSection($id) {
 	$info = [];
 
 	if($response === FALSE)
-		die("ERROR! Can't get course info."); 
+		die("ERROR! Can't get course info.");
 
 	if ($response) {
 		array_push($info, $response['name']);
@@ -143,7 +147,7 @@ function getGames($course) {
 	// $games = [];
 
 	// if($result === FALSE)
-	// 	die("ERROR! Can't get games."); 
+	// 	die("ERROR! Can't get games.");
 
 	// if ($result->num_rows > 0)
 	// 	while ($row = $result->fetch_assoc())
@@ -160,7 +164,7 @@ function getGameInfo($game) {
 	// $result = $mysqli->query('SELECT * FROM Games WHERE id='.$game);
 	return $response;
 	// if($result === FALSE)
-	// 	die("ERROR! Can't get game info."); 
+	// 	die("ERROR! Can't get game info.");
 
 	// if ($result->num_rows > 0) {
 	// 	$row = $result->fetch_assoc();
@@ -169,10 +173,9 @@ function getGameInfo($game) {
 }
 // ---------------
 
-// return boolean - game session is "live" (joinable by students) or not 
+// return boolean - game session is "live" (joinable by students) or not
 function sessionIsLive($id) {
     global $QW_DAO;
 	// return $mysqli->query('SELECT live FROM Games WHERE id="'.$id.'" LIMIT 1')->fetch_assoc()['live'];
-	return $QW_DAO->sessionIsLive($id);
+	return $QW_DAO->gameIsLive($id);
 }
-

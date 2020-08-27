@@ -14,7 +14,7 @@ use \QW\DAO\QW_DAO;
 
 $LAUNCH = LTIX::session_start();
 
-$p = $CFG->dbprefix;
+$p = $CFG->dbprefix . "econ_sim_";
 $QW_DAO = new QW_DAO($PDOX, $p);
 
 if ($_POST['action']=='join_multi') {

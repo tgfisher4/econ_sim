@@ -10,12 +10,18 @@ Initially displays courses view. This view displays an instructors saved courses
 
 */
 	require_once "../tsugi_config.php";
+	require_once '../dao/QW_DAO.php';
 
 	use \Tsugi\Core\LTIX;
+	use \QW\DAO\QW_DAO;
+
 
 	$LAUNCH = LTIX::session_start();
 
-	include 'utils/sql_settup.php';
+	$p = $CFG->dbprefix . "econ_sim_";
+	$QW_DAO = new QW_DAO($PDOX, $p);
+
+	//include 'utils/sql_settup.php';
 
 	// if student manages to navigate to this page, they will automatically be redirected back to student side
 	if (!$LAUNCH->user->instructor) {
@@ -31,27 +37,27 @@ Initially displays courses view. This view displays an instructors saved courses
 	// if neither course nor game in query string, show courses view
 	// call func from sql_settup to get the instructor's saved courses
 	if (!isset($_GET['course']) && !isset($_GET['game']))
-		$courses = getCourses($USER->email);
+		$courses = $QW_DAO->getCourses($USER->email);
 
 	// if course in query string, show games view
 	// get current course name using course id in query and get course's games to list on screen
 	if (isset($_GET["course"])) {
-		$selectedCourse = getCourseNameSection($_GET["course"]);
-		$selectedCourseName = $selectedCourse[0];
-		$selectedCourseSection = $selectedCourse[1];
-		$games = getGames($_GET["course"]);
+		$selectedCourse = $QW_DAO->getCourseNameSection($_GET["course"]);
+		$selectedCourseName = $selectedCourse['name'];
+		$selectedCourseSection = $selectedCourse['section'];
+		$games = $QW_DAO->getGames($_GET["course"]);
 	}
 
 	// if game is in querystring, show individual game view
 	isset($_GET['game']) ? $selectedGame = $_GET['game'] : $selectedGame = NULL;
 
 	$gameInfo = NULL;
-	$sessionRunning = FALSE;
+	$isGameLive = FALSE;
 
 	// get the details of the selected game and check if it is toggled on/off
 	if ($selectedGame) {
-		$gameInfo = getGameInfo((int)$selectedGame);
-		$sessionRunning = sessionIsLive($gameInfo['id']);
+		$gameInfo = $QW_DAO->getGameInfo((int)$selectedGame);
+		$isGameLive = $gameInfo['live'] ? TRUE : FALSE; // either 1 or 0
 	}
 
 	// different icons for the different types of available games
@@ -83,8 +89,8 @@ Initially displays courses view. This view displays an instructors saved courses
 	    		<?= $selectedCourseName ? $selectedCourseName : ($gameInfo ? $gameInfo['name'] : "Welcome, Admin!") ?>
 	    	</h3>
 	    	<h6 style="margin-left: 30px"><?= $selectedCourseSection ? 'Section '.$selectedCourseSection : ''?></h6>
-	    	<h6 id="sessionIdSubheader" style="display: <?= $sessionRunning ? '' : 'none' ?>; margin-left: 30px">
-				<?= $gameInfo ? "Session ID: ".$gameInfo['id'] : "" ?>
+	    	<h6 id="sessionIdSubheader" style="display: <?= $isGameLive ? '' : 'none' ?>; margin-left: 30px">
+				<?= $gameInfo ? "Session ID: ".$gameInfo['game_id'] : "" ?>
 			</h6>
 	    </span>
 	  </div>
@@ -145,7 +151,7 @@ Initially displays courses view. This view displays an instructors saved courses
 					<div class="grid-x grid-padding-x small-up-2 medium-up-3" style="margin-bottom: 30px;">
 			<?php } ?>
 						<div class="cell grow">
-						  	<a onclick="course_selected('<?= $course["id"] ?>')">
+						  	<a onclick="course_selected('<?= $course["course_id"] ?>')">
 						      	<div class="card" style="<?= htmlspecialchars($course_backgrounds[$course_num]) ?>">
 							        <div class="card-section">
 							        	<i class="fas <?= $course["avatar"]?$course["avatar"]:'fa-chart-bar' ?> fa-7x float-center game_options_content"></i>
@@ -181,7 +187,7 @@ Initially displays courses view. This view displays an instructors saved courses
 					<div class="grid-x grid-padding-x small-up-2 medium-up-3" style="margin-bottom: 30px;">
 			<?php } ?>
 						<div class="cell grow">
-						  	<a onclick="game_selected('<?= $game["id"] ?>')">
+						  	<a onclick="game_selected('<?= $game["game_id"] ?>')">
 						      	<div class="card" style="<?= htmlspecialchars($backgrounds[$game_num]) ?>">
 							        <div class="card-section">
 							        	<i class="fas <?= $gameTypeIcons[$game['type']] ?> fa-7x float-center game_options_content"></i>
@@ -207,15 +213,15 @@ Initially displays courses view. This view displays an instructors saved courses
 		<!-- IDIVIDUAL GAME SECTION -->
 		<div id="game_details" style="margin-bottom: 35px">
 			<div id="session_toggle" class="grid-x grid-padding-x small-up-2 medium-up-3" style="display: none">
-				<div id="toggleColor" class="cell mode-cell grow" onclick="toggleSession('<?= $gameInfo["id"] ?>','<?= addslashes($gameInfo["name"]) ?>')" style="cursor: pointer; background: linear-gradient(141deg, <?= !$sessionRunning ? '#008c0b 20%, #1fa82f 80%);' : '#f1c00b 20%, #e8d722 80%);' ?>">
-					<i id="toggleIcon" class="far fa-<?= !$sessionRunning ? 'play' : 'stop' ?>-circle fa-2x mode_options_content" style="float: left; padding-left: 50px"></i>
-					<h4 id="toggleText" class="mode_options_content" style="font-weight: 300"><?= !$sessionRunning ? 'Start Session' : 'End Session' ?></h4>
+				<div id="toggleColor" class="cell mode-cell grow" onclick="toggleGameLive('<?= $gameInfo["game_id"] ?>','<?= addslashes($gameInfo["name"]) ?>')" style="cursor: pointer; background: linear-gradient(141deg, <?= !$isGameLive ? '#008c0b 20%, #1fa82f 80%);' : '#f1c00b 20%, #e8d722 80%);' ?>">
+					<i id="toggleIcon" class="far fa-<?= !$isGameLive ? 'play' : 'stop' ?>-circle fa-2x mode_options_content" style="float: left; padding-left: 50px"></i>
+					<h4 id="toggleText" class="mode_options_content" style="font-weight: 300"><?= !$isGameLive ? 'Start Session' : 'End Session' ?></h4>
 				</div>
 			</div>
 			<div id="view_game" class="grid-x grid-padding-x small-up-2 medium-up-3" style="margin-top: 25px; display: none;">
 				<div id="dynamicButtonFunc" class="cell mode-cell grow" style="cursor: pointer; background: linear-gradient(141deg, #0fb8ad 20%, #1fc8db 80%);">
-					<i id="dynamicButtonIcon" class="<?= $sessionRunning ? 'far fa-eye' : 'fas fa-pencil-alt' ?> fa-2x mode_options_content" style="cursor: pointer; float: left; padding-left: 50px"></i>
-					<h4 id="dynamicButtonText" class="mode_options_content" style="font-weight: 300"><?= $sessionRunning ? 'Game Results' : 'Game Setup' ?></h4>
+					<i id="dynamicButtonIcon" class="<?= $isGameLive ? 'far fa-eye' : 'fas fa-pencil-alt' ?> fa-2x mode_options_content" style="cursor: pointer; float: left; padding-left: 50px"></i>
+					<h4 id="dynamicButtonText" class="mode_options_content" style="font-weight: 300"><?= $isGameLive ? 'Game Results' : 'Game Setup' ?></h4>
 				</div>
 			</div>
 			<div id="delete" class="grid-x grid-padding-x small-up-2 medium-up-3" style="margin-top: 25px; display: none;">
@@ -224,7 +230,7 @@ Initially displays courses view. This view displays an instructors saved courses
 					<h4 class="mode_options_content" style="font-weight: 300">Delete Game</h4>
 				</div>
 				<form id="deleteForm" method="post" action="utils/game_util.php">
-					<input type="hidden" name="delete_game_id" value="<?= $gameInfo['id'] ?>">
+					<input type="hidden" name="delete_game_id" value="<?= $gameInfo['game_id'] ?>">
 					<input type="hidden" name="course_id" value="<?= $gameInfo['course_id'] ?>">
 				</form>
 			</div>
@@ -530,9 +536,6 @@ Initially displays courses view. This view displays an instructors saved courses
 	<!-- end modals -->
 	</div>
 
-	<input type="hidden" id="sessionRunning" value="<?= $sessionRunning ?>">
-	<input type="hidden" id="id" value="<?= $gameInfo['id'] ?>">
-
 	<!-- Bottom bar -->
 	<footer class="footer"></footer>
 
@@ -608,7 +611,7 @@ Initially displays courses view. This view displays an instructors saved courses
     		});
     	}
 
-    	function toggleSession(id, gameName, mode) { // makes call to change session live status
+    	function toggleGameLive(id, gameName, mode) { // makes call to change session live status
     		var priceHistory = []; var shockYear=0;
     		if ('<?= isset($gameInfo["market_struct"]) && $gameInfo["market_struct"] ?>' == 'perfect') {
     			// if toggling a perfect comp game, generate the 25 yr price history
@@ -628,11 +631,13 @@ Initially displays courses view. This view displays an instructors saved courses
 		    	}
     		}
 		    $.ajax({
-		    	url: "utils/session.php",
+		    	url: "<?= addSession("utils/session.php") ?>",
 		    	method: "POST",
 		    	data: {action: "toggle", id: id, priceHist: priceHistory.join()},
 		    	success: function(toggledOn) {
-		    		// update screen accordingly based on weather going online or offline
+		    		// update screen accordingly based on whether going online or offline
+					// returning whether the session was toggled on lets us avoid another DB call
+					console.log('toggled on: ' + toggledOn);
 		    		if (toggledOn) {
 		    			$('#sessionIdSubheader').css('display', '');
 		    			$('#toggleColor').css('background', "linear-gradient(141deg, #f1c00b 20%, #e2d009 80%)");
@@ -641,7 +646,6 @@ Initially displays courses view. This view displays an instructors saved courses
 		    			$('#toggleIcon').addClass('far fa-stop-circle fa-2x mode_options_content');
 		    			$('#dynamicButtonText').text('Game Results');
 		    			$('#toggleText').text('End Session');
-		    			$('#sessionRunning').val(1);
 		    		}
 		    		else {
 		    			$('#sessionIdSubheader').css('display', 'none');
@@ -651,7 +655,6 @@ Initially displays courses view. This view displays an instructors saved courses
 		    			$('#toggleIcon').addClass('far fa-play-circle fa-2x mode_options_content');
 		    			$('#dynamicButtonText').text('Game Setup');
 		    			$('#toggleText').text('Start Session');
-		    			$('#sessionRunning').val(0);
 		    		}
 		    	}
 		    });
@@ -659,7 +662,7 @@ Initially displays courses view. This view displays an instructors saved courses
 
     	// click handler for game results/edit game button
 	    $(document).on('click', '#dynamicButtonFunc', function() {
-	    	if ($('#sessionRunning').val() == 1)
+	    	if (<?= $isGameLive ? "true" : "false"?>)
 	    		redirectResultsPage();
 	    	else
 	    		editGame();
@@ -778,8 +781,9 @@ Initially displays courses view. This view displays an instructors saved courses
 
     	// when user selects results button, send to results.php
     	function redirectResultsPage() {
-    		urlPrefix = window.location.href.substr(0, window.location.href.indexOf('src'));
-    		window.location=urlPrefix+'src/results.php?game='+$('#id').val();
+    		//urlPrefix = window.location.href.substr(0, window.location.href.indexOf('src'));
+    		//window.location=urlPrefix+'src/results.php?game='+$('#id').val();
+			window.location = "<?= addSession("results.php"); ?>" + "<?= $gameInfo ? "&game=".$gameInfo['game_id'] : ""?>" ;
     	}
 
     	// handles displaying the relevant options for the selected market structure in the new game/edit game modal

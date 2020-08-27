@@ -10,7 +10,7 @@ On oligopoly mode, a waiting overlay is shown on top of the game screen preventi
 Last Update: Updated socket.io to Tsugi Websockets
 */
 
-include 'utils/sql_settup.php';
+//include 'utils/sql_settup.php';
 require_once "../tsugi_config.php";
 
 use \Tsugi\Core\LTIX;

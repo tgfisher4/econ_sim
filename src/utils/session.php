@@ -18,7 +18,7 @@ use \QW\DAO\QW_DAO;
 
 $LAUNCH = LTIX::session_start();
 
-$p = $CFG->dbprefix;
+$p = $CFG->dbprefix . "econ_sim_";
 $QW_DAO = new QW_DAO($PDOX, $p);
 
 // $mysqli = new mysqli('localhost', 'root', 'root', 'econ_sim_data');
@@ -43,17 +43,20 @@ if (isset($_POST["checkExistance"])) { // Called when student tries to enter gam
 	// 			header("Location: ../game_main.php?session=".$_POST['id']);
 	// else
 	// 	header("Location: ../student.php?session=err"); // session doesn't exist (is not toggled on by instuctor)
-	$data = $QW_DAO->gameExists($_POST["id"])
-	if ($data['live'])
+	// we're definitely gonna have to throw in some addSessions here
+	$data = $QW_DAO->gameExists($_POST["game_id"]);
+	if ($data['live']){
 		if ($QW_DAO->playerCompletedGame($USER->email))
 			header("Location: ../student.php?session=err3"); // player has already completed game for this session
-		else
-			if $data['market_struct'] == 'perfect')
+		else{
+			if ($data['market_struct'] == 'perfect')
 				header("Location: ../perfect_game.php?session=".$_POST['id']);
-			else if $data['market_struct'] == 'monopolistic')
+			else if ($data['market_struct'] == 'monopolistic')
 				header("Location: ../monopolistic_game.php?session=".$_POST['id']);
 			else
 				header("Location: ../game_main.php?session=".$_POST['id']);
+		}
+	}
 	else
 		header("Location: ../student.php?session=err"); // session doesn't exist (is not toggled on by instuctor)
 }
@@ -75,13 +78,14 @@ else if ($_POST['action'] == 'toggle') {
 	// }
 	// echo $toggledOn;
 
-	echo $QW_DAO->toggleSession($toggledOn, $_POST["id"], $_POST["priceHist"]);
+	//echo $QW_DAO->toggleSession($toggledOn, $_POST["id"], $_POST["priceHist"]);
+	echo $QW_DAO->toggleGameLive($_POST["id"], $_POST["priceHist"]);
 }
 
 // save game info to gameSessionData
 else if ($_POST['action'] == 'update_gameSessionData') {
 
-	$QW_DAO->updateGameSessionData($_POST["groupId"],$_POST["username"],$_POST['quantity'],$_POST['revenue'],$_POST['profit'],$_POST['percentReturn'],$_POST['price'],$_POST['totalCost'],$_POST['complete'],$_POST['gameId'],$_POST['opponent'],$_POST['unitCost']);
+	$QW_DAO->updateResults($_POST["groupId"],$_POST["username"],$_POST['quantity'],$_POST['revenue'],$_POST['profit'],$_POST['percentReturn'],$_POST['price'],$_POST['totalCost'],$_POST['complete'],$_POST['gameId'],$_POST['opponent'],$_POST['unitCost']);
 
 	// $result = $mysqli->query('SELECT * FROM GameSessionData WHERE groupId="'.$_POST["groupId"].'" AND player="'.$_POST["username"].'"');
 
@@ -113,9 +117,9 @@ else if ($_POST['action'] == 'remove_student') {
 	// $mysqli->query("DELETE FROM Sessions WHERE `groupId`='".$_POST['groupId']."'");
 }
 
-// instructor results page uses this function to grab the session data and display it
-else if ($_POST['action'] == 'retrieve_gameSessionData') {
-	echo $QW_DAO->retrieveSessionData($_POST['valueType'],$_POST["gameId"],$row['groupId'],$row['player']);
+// instructor results page uses this function to grab the results for a specific game and display it
+else if ($_POST['action'] == 'retrieve_game_results') {
+	echo $QW_DAO->retrieveValueFromGameResults($_POST['valueType'], $_POST["gameId"]);//,$row['groupId'],$row['player']);
 
 	// $result = $mysqli->query('SELECT player, groupId, '.$_POST['valueType'].' FROM GameSessionData WHERE gameId="'.$_POST["gameId"].'"');
 

@@ -20,7 +20,7 @@ $io->on('connection', function($socket) {
 
     // when student joins a game session (either single or multiplayer)
     $socket->on('joinGame', function($joinInfo) use($socket) {
-        // global $gameCollection; 
+        // global $gameCollection;
         global $io;
 
         // tmpObj will tempirarily hold the object created by the build game funcitons
@@ -36,11 +36,11 @@ $io->on('connection', function($socket) {
             $socket->join($tmpObj->groupId);
 
             // send the generated groupId back to client (student - game_main.php)
-            $io->to($tmpObj->groupId)->emit('studentJoinedGame', $tmpObj); 
+            $io->to($tmpObj->groupId)->emit('studentJoinedGame', $tmpObj);
         }
         else { // join multiplayer game
             $mysqli = new mysqli('127.0.0.1', 'root', 'root', 'econ_sim_data');
-            $result = $mysqli->query('SELECT * FROM Sessions WHERE gameId="'.$joinInfo['id'].'" AND player2 IS NULL LIMIT 1');
+            $result = $mysqli->query('SELECT * FROM econ_sim_sessions WHERE gameId="'.$joinInfo['id'].'" AND player2 IS NULL LIMIT 1');
 
             if ($result->num_rows > 0) { // found session waiting for opponent, so join it
                 $row = $result->fetch_assoc();
@@ -48,7 +48,7 @@ $io->on('connection', function($socket) {
 
                 // set object with relavent data to send back to client
                 $tmpObj->groupId = $groupId;
-                $tmpObj->playerOne = $row['player1']; 
+                $tmpObj->playerOne = $row['player1'];
                 $tmpObj->playerTwo = $joinInfo['username'];
                 $tmpObj->full = true;
 
@@ -56,23 +56,23 @@ $io->on('connection', function($socket) {
                 $socket->join($tmpObj->groupId);
 
                 // add opponent to player2 column in table
-                $mysqli->query('UPDATE Sessions SET player2="'.$joinInfo['username'].'" WHERE id="'.$row['id'].'"');    
+                $mysqli->query('UPDATE econ_sim_sessions SET player2="'.$joinInfo['username'].'" WHERE id="'.$row['id'].'"');
 
                 // send the generated groupId back to client
-                $io->to($tmpObj->groupId)->emit('studentJoinedGame', $tmpObj); 
+                $io->to($tmpObj->groupId)->emit('studentJoinedGame', $tmpObj);
             }
             else { // no one is waiting for opponent
 
                 $socket->join($groupId);
                 $tmpObj->full=false;
 
-                $mysqli->query('INSERT INTO Sessions (groupId, gameId, player1) VALUES ("'.$groupId.'", "'.$joinInfo['id'].'", "'.$joinInfo['username'].'")');
+                $mysqli->query('INSERT INTO econ_sim_sessions (groupId, gameId, player1) VALUES ("'.$groupId.'", "'.$joinInfo['id'].'", "'.$joinInfo['username'].'")');
             }
 
             $mysqli->close();
         }
 
-        
+
     });
 
     // when student exits game after joining/hits "cancel" while waiting for opponent/ refreshes or closes tab/browser
@@ -95,22 +95,22 @@ $io->on('connection', function($socket) {
         global $io;
         $tmpObj = new stdClass;
         $tmpObj->bothSubmitted=false;
-               
+
         if ($submitData['mode'] == 'single') {
              $io->to($submitData['groupId'])->emit('singleplayerSubmission', $submitData['value']);
         }
         else {
              $mysqli = new mysqli('127.0.0.1', 'root', 'root', 'econ_sim_data');
-             $result = $mysqli->query('SELECT * FROM Sessions WHERE groupId="'.$submitData['groupId'].'" LIMIT 1');
+             $result = $mysqli->query('SELECT * FROM econ_sim_sessions WHERE groupId="'.$submitData['groupId'].'" LIMIT 1');
              $row = $result->fetch_assoc();
 
             if ($row['p1'] == NULL) {
-                $mysqli->query('UPDATE Sessions SET p1="'.$submitData['username'].'", p1Data="'.$submitData['value'].'" WHERE id="'.$row['id'].'"');   
+                $mysqli->query('UPDATE econ_sim_sessions SET p1="'.$submitData['username'].'", p1Data="'.$submitData['value'].'" WHERE id="'.$row['id'].'"');
                 $tmpObj->p1=$submitData['username'];
                 $io->to($submitData['groupId'])->emit('multiplayerSubmission', $tmpObj);
-            } 
+            }
             else {
-                $mysqli->query('UPDATE Sessions SET p1=NULL, p1Data=NULL WHERE id="'.$row['id'].'"');
+                $mysqli->query('UPDATE econ_sim_sessions SET p1=NULL, p1Data=NULL WHERE id="'.$row['id'].'"');
 
                 $tmpObj->bothSubmitted=true;
                 $tmpObj->p1=$row['p1'];
@@ -122,7 +122,7 @@ $io->on('connection', function($socket) {
             }
             $mysqli->close();
         }
-        
+
     });
 
     // submissions from perfect competition games
@@ -149,7 +149,7 @@ $io->on('connection', function($socket) {
         // instructor client listens for this message to make ajax call to grab submission data from mysql
         $io->emit('studentSubmitedQuantity');
     });
-   
+
 });
 
 if (!defined('GLOBAL_START')) {

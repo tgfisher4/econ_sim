@@ -50,7 +50,7 @@ function buildSingleGame(socket) {
 }
 // ------------------------------------
 
-io.on('connection', function(socket) { 
+io.on('connection', function(socket) {
 
     // when admin toggles session on/off. create/destroy game object
     socket.on('toggleGameSession', function(id, mode, sessionRunning) {
@@ -77,7 +77,7 @@ io.on('connection', function(socket) {
         socket.gameId = joinInfo['id'];
 
         // when all existing singleGameObjects are full, create new one and add player
-        if (joinInfo['mode'] == 'single') { 
+        if (joinInfo['mode'] == 'single') {
             tmpObj = buildSingleGame(socket);
             tmpObj.player = joinInfo['username'];
             socket.join(tmpObj['groupId']);
@@ -99,7 +99,7 @@ io.on('connection', function(socket) {
                 }
             }
 
-             // if no non full multi games, build new one and make student player one 
+             // if no non full multi games, build new one and make student player one
             if (!multiPlayerAdded) {
                 console.log('creating new multi object');
                 tmpObj = buildMultiGame(socket);
@@ -176,7 +176,7 @@ io.on('connection', function(socket) {
         if (submitData['mode'] == 'single' || (submitData['mode'] == 'multi' && tmpObj['playerOneData'].length == tmpObj['playerTwoData'].length))
             io.emit('studentSubmitedQuantity', gameCollection);
         console.log("player data was updated");
-        
+
     });
 
     // when admin initialy loads results page, calls this func to return data
@@ -190,4 +190,3 @@ io.on('connection', function(socket) {
     });
 
 });
-
