@@ -613,10 +613,11 @@ Initially displays courses view. This view displays an instructors saved courses
 
     	function toggleGameLive(id, gameName, mode) { // makes call to change session live status
     		var priceHistory = []; var shockYear=0;
-    		if ('<?= isset($gameInfo["market_struct"]) && $gameInfo["market_struct"] ?>' == 'perfect') {
+    		if ('<?= isset($gameInfo["market_struct"]) && $gameInfo["market_struct"] == "perfect"?>') {
     			// if toggling a perfect comp game, generate the 25 yr price history
     			priceHistory = [50];
     			for (var i=1;i<25;i++) {
+					console.log(i + ": " + priceHistory);
 		    		var prevPrice = priceHistory[i-1];
 
 		    		// if 5th year or 5 years since sock, allow random shock occurance (1 in 5 probability of occuring)
@@ -630,6 +631,8 @@ Initially displays courses view. This view displays an instructors saved courses
 		    		priceHistory.push(price.toFixed(2));
 		    	}
     		}
+			console.log("end: " + priceHistory);
+			console.log(priceHistory.join());
 		    $.ajax({
 		    	url: "<?= addSession("utils/session.php") ?>",
 		    	method: "POST",

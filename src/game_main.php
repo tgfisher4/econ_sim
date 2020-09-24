@@ -12,17 +12,22 @@ Last Update: Updated socket.io to Tsugi Websockets
 
 //include 'utils/sql_settup.php';
 require_once "../tsugi_config.php";
+require_once "../dao/QW_DAO.php";
 
 use \Tsugi\Core\LTIX;
 use Tsugi\Core\WebSocket;
+use \QW\DAO\QW_DAO;
 
 $LAUNCH = LTIX::session_start();
+
+$p = $CFG->dbprefix . "econ_sim_";
+$QW_DAO = new QW_DAO($PDOX, $p);
 
 // Render view
 $OUTPUT->header();
 
 // get the current games set up info
-$gameInfo = getGameInfo((int)$_GET['session']);
+$gameInfo = $QW_DAO->getGameInfo($_GET['game']);
 $startGame = true;
 
 // if multi mode (oligopoly) do not immediately start game - must wait to be matched with another player
@@ -607,7 +612,7 @@ if ($gameInfo['mode'] == 'multi') $startGame = false;
 				  		url: "utils/session.php",
 				  		method: 'POST',
 			  			data: { action: 'update_gameSessionData', groupId: groupId, username: $('#usrname').val(), opponent: null, quantity: quantity, revenue: json['totalRevenue'],
-			  				profit: json['profit'], percentReturn: json['percentReturn'].toPrecision(4), price: json['demand'], unitCost: json['unitCost'], totalCost: json['totalCost'], complete: gameOver?1:0, gameId: <?= $gameInfo['id'] ?>  }
+			  				profit: json['profit'], percentReturn: json['percentReturn'].toPrecision(4), price: json['demand'], unitCost: json['unitCost'], totalCost: json['totalCost'], complete: gameOver?1:0, gameId: <?= $gameInfo['game_id'] ?>  }
 			  		});
 
 
@@ -755,7 +760,7 @@ if ($gameInfo['mode'] == 'multi') $startGame = false;
 				  		method: 'POST',
 			  			data: { action: 'update_gameSessionData', groupId: groupId, username: $('#usrname').val(), opponent: $('#opponent').val(), quantity: quantity,
 			  				revenue: json['revenue1'], profit: json['profit1'], percentReturn: json['percentReturn1'].toPrecision(4), price: json['demand'],
-			  				unitCost: json['unitCost'], totalCost: json['totalCost'], complete: gameOver, gameId: <?= $gameInfo['id'] ?> }
+			  				unitCost: json['unitCost'], totalCost: json['totalCost'], complete: gameOver, gameId: <?= $gameInfo['game_id'] ?> }
 			  		});
 
 
@@ -980,7 +985,7 @@ if ($gameInfo['mode'] == 'multi') $startGame = false;
 		// if game is not over, remove student from session table so they can restart game
 		if (!gameIsComplete)
 			$.ajax({
-		  		url: "utils/session.php",
+		  		url: <?= addSession("utils/session.php") ?>,
 		  		method: 'POST',
 	  			data: { action: 'remove_student', groupId: groupId }
 	  		});

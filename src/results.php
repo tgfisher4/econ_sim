@@ -95,7 +95,7 @@ $gameInfo = $QW_DAO->getGameInfo($selectedGame);
 			<h4>Annual Averages</h4>
 			<hr>
 			<div id="valueDisplaySelector" class="grid-x">
-				<div class="cell small-3"><button onclick="changeDisplayValue(this)">Quantity</button></div>
+				<div class="cell small-3"><button onclick="changeDisplayValue(this)"class="selectedValue">Quantity</button></div>
 				<div class="cell small-3"><button onclick="changeDisplayValue(this)">Price</button></div>
 				<div class="cell small-3"><button onclick="changeDisplayValue(this)">Revenue</button></div>
 				<div class="cell small-3"><button onclick="changeDisplayValue(this)">Profit</button></div>
@@ -132,9 +132,10 @@ $gameInfo = $QW_DAO->getGameInfo($selectedGame);
 		$OUTPUT->footerStart();
 	?>
 
-	<script src="../js/vendor/jquery.js"></script>
-    <script src="../js/vendor/what-input.js"></script>
-    <script src="../js/vendor/foundation.js"></script>
+
+	<script src="https://code.jquery.com/jquery-3.4.1.min.js" integrity="sha256-CSXorXvZcTkaix6Yvo6HppcZGetbYMGWSFlBw8HfCJo=" crossorigin="anonymous"></script>
+    <script src="https://cdnjs.cloudflare.com/ajax/libs/what-input/5.2.6/what-input.min.js" integrity="sha256-yJJHNtgDvBsIwTM+t18nNnp9rEXdyZ1knji5sqm4mNw=" crossorigin="anonymous"></script>
+    <script src="https://cdnjs.cloudflare.com/ajax/libs/foundation/6.6.1/js/foundation.min.js" integrity="sha256-tdB5sxJ03S1jbwztV7NCvgqvMlVEvtcoJlgf62X49iM=" crossorigin="anonymous"></script>
     <script src="../js/app.js"></script>
     <script src="../js/node_modules/chart.js/dist/Chart.js"></script>
     <script type="text/javascript" src="https://cdn.datatables.net/v/zf/dt-1.10.18/b-1.5.2/sl-1.2.6/datatables.min.js"></script>
@@ -157,7 +158,7 @@ $gameInfo = $QW_DAO->getGameInfo($selectedGame);
 
 		// make explicit call to get data one time on load, them listen for dynamic updates thereafter
 		// (populates the graph and chart on intial page load as well as refreshes)
-		updateResults();
+		updateResults(true);
 
 		/*
 		\\\\when a student submits quantity from gaim_main.php////
@@ -184,7 +185,7 @@ $gameInfo = $QW_DAO->getGameInfo($selectedGame);
 		  		method: 'POST',
 	  			data: { action: 'retrieve_game_results', gameId: <?=$gameInfo['game_id']?>, valueType: selectedValType },
 	  			success: function(response) {
-					console.log(response);
+					console.log(JSON.stringify(JSON.parse(response), null, 2));
 	  				var json = JSON.parse(response);
 
 	  				for (var i=0; i < Object.keys(json).length; i++) {
@@ -207,6 +208,7 @@ $gameInfo = $QW_DAO->getGameInfo($selectedGame);
 		        	tableCallback(tableData);
 
 		        	// to change raw chart data to the desired array of averages for each year
+					/*
 		        	var counter = 0, i = 0, sum = 0;
 		        	while (i <= 20) { // loop a maximum of 20 times (the max number of years for game)
 		        		for (j = 0; j < chartData.length; j++) { //
@@ -218,13 +220,30 @@ $gameInfo = $QW_DAO->getGameInfo($selectedGame);
 		        		averages.push((sum/counter).toFixed(2));
 		        		sum = 0; counter = 0; i++;
 		        	}
+					*/
+
+					for(let year = 0; year < 20; year++){
+						// did not use reduce instead of for loop to facilitate early exit
+
+						res =	chartData.reduce(
+									(running, curr) => (
+										[	running[0] + (curr.length > year ? curr[year] : 0),
+											running[1] + (curr.length > year)]
+									), [0,0]
+								)
+
+						if (res[1] == 0) break;
+						averages.push(res[0]/res[1]);
+					}
 
 		        	if (chart) { // if chart exists reset data and update it
-		        		chart.data.datasets[0].data = [];
+						if ($(".selectedValue").text() != "Quantity")	chart.data.datasets[1].data = [];
+	            		else 											chart.data.datasets[1].data = new Array(20).fill($('#eq').val());
 		            	chart.data.datasets[0].data = averages;
 		            	chart.update();
 		        	}
 		        	else // if chart doesnt exist yet, create it
+						 // creating chart ==> on landing quantity screen
 		        		graphCallback(averages, $('#eq').val(), 'Quantity');
 
 	  			}
@@ -343,8 +362,10 @@ $gameInfo = $QW_DAO->getGameInfo($selectedGame);
 		}
 
 		function revealChartCallback(data, count) {
+			console.log("reveal chart data:");
+			console.log(JSON.stringify(data));
 			const name1 = data[0][0];
-			const data1 = data[0].slice(2);
+			const data1 = data[0].slice(1);
 			const equilibrium = new Array(20).fill($('#eq').val()).splice(0, $('#numRounds').val());
 
 			// create data object based on number of selected students (1 or 2)
@@ -371,7 +392,7 @@ $gameInfo = $QW_DAO->getGameInfo($selectedGame);
 				    };
 			else {
 				const name2 = data[1][0];
-				const data2 = data[1].slice(2);
+				const data2 = data[1].slice(1);
 
 				var dataObj = {
 			        labels: graphLabels,
@@ -429,9 +450,13 @@ $gameInfo = $QW_DAO->getGameInfo($selectedGame);
 		$("#valueDisplaySelector").find("button").first().addClass('selectedValue'); // initial highlighted value is quanitity
 		function changeDisplayValue(element) {
 			// change colors
-			$("#valueDisplaySelector").find("button").removeClass('selectedValue');
+			//$("#valueDisplaySelector").find("button").removeClass('selectedValue');
+			$(".selectedValue").removeClass("selectedValue");
 			$(element).addClass('selectedValue');
 			selectedValType = valTypes[$(element).text()];
+
+			updateResults();
+			return;
 
 			// get appropriate values and populate chart/table
 			// ajax to get data from sql for chart and table displays
@@ -447,8 +472,8 @@ $gameInfo = $QW_DAO->getGameInfo($selectedGame);
 		  		method: 'POST',
 	  			data: { action: 'retrieve_game_results', gameId: <?=$gameInfo['game_id']?>, valueType: selectedValType },
 	  			success: function(response) {
+					console.log(JSON.stringify(JSON.parse(response), null, 2));
 	  				var json = JSON.parse(response);
-					console.log(response);
 
 	  				// clear arrays
 	  				chartData=[];tableData=[];indivData=[];averages=[];
@@ -469,22 +494,32 @@ $gameInfo = $QW_DAO->getGameInfo($selectedGame);
 
 	  				// create table
 		        	tableCallback(tableData);
+					console.log("table created");
 
-		        	// to change raw chart data to the desired array of averages for each year
-		        	var counter = 0, i = 0, sum = 0;
-		        	while (i <= 20) { // loop a maximum of 20 times (the max number of years for game)
-		        		for (j = 0; j < chartData.length; j++) { //
-		        			sum += chartData[j][i];
-		        			counter++;
-		        		}
-		        		if (counter==0)
-		        			break;
-		        		averages.push((sum/counter).toFixed(2));
-		        		sum = 0; counter = 0; i++;
-		        	}
+
+					for(let year = 0; year < 20; year++){
+						// did not use reduce instead of for loop to facilitate early exit
+
+						res =	chartData.reduce(
+									(running, curr) => (
+										[	running[0] + (curr.length > year ? curr[year] : 0),
+											running[1] + (curr.length > year)]
+									), [0,0]
+								)
+
+						console.log("Year" + (year + 1));
+						console.log("sum: " + res[0] + " from " + res[1] + " - avg: " + res[0]/res[1]);
+						if (res[1] == 0) break;
+						gAvgs.push(res[0]/res[1]);
+						console.log("avgs after append:");
+						console.log(averages);
+
+					}
+					console.log("final avgs:");
+					console.log(averages);
+					console.log("\n====================\n");
 
 		        	// update chart
-	        		chart.data.datasets[0].data = [];
 	            	chart.data.datasets[0].data = averages;
 	            	if ($(element).text() != "Quantity")
 	            		chart.data.datasets[1].data = [];

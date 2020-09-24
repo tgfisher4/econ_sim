@@ -90,6 +90,7 @@ else if (isset($_POST['mode']) && isset($_POST['difficulty']) && isset($_POST['m
 		//     echo "Error: " . $sql . "<br>" . $mysqli->error;
 
 	}
+	header("Location: " . addSession("../admin_page.php?course=".$_POST['course_id']));
 }
 
 // Delete game
@@ -103,10 +104,10 @@ else if (isset($_POST['delete_game_id'])){// && isset($_POST['course_id'])) {
 	// 	header("Location: ../../econ_sim/src/admin_page.php?course=".$_POST['deletedGameCourse']);
 	// else
 	//     echo "Error: " . $delete_sql . "<br>" . $mysqli->error;
+	header("Location: " . addSession("../admin_page.php?course=".$_POST['course_id']));
 }
 else if ($_POST['action']=='getHistory') {
-	echo $QW_DAO->getPriceHist($_POST['id']);
+	echo $QW_DAO->getPriceHist($_POST['game_id']);
 	// $result = $mysqli->query('SELECT price_hist FROM Games WHERE id="'.$_POST["id"].'"');
 	// echo $result->fetch_assoc()['price_hist'];
 }
-header("Location: " . addSession("../admin_page.php?course=".$_POST['course_id']));

@@ -47,18 +47,18 @@ if (isset($_POST["checkExistance"])) { // Called when student tries to enter gam
 	$data = $QW_DAO->gameExists($_POST["game_id"]);
 	if ($data['live']){
 		if ($QW_DAO->playerCompletedGame($USER->email))
-			header("Location: ../student.php?session=err3"); // player has already completed game for this session
+			header("Location: ".addSession("../student.php")."&game=err3"); // player has already completed game for this session
 		else{
 			if ($data['market_struct'] == 'perfect')
-				header("Location: ../perfect_game.php?session=".$_POST['id']);
+				header("Location: ".addSession("../perfect_game.php")."&game=".$_POST['game_id']);
 			else if ($data['market_struct'] == 'monopolistic')
-				header("Location: ../monopolistic_game.php?session=".$_POST['id']);
+				header("Location: ".addSession("../monopolistic_game.php")."&game=".$_POST['game_id']);
 			else
-				header("Location: ../game_main.php?session=".$_POST['id']);
+				header("Location: ".addSession("../game_main.php")."&game=".$_POST['game_id']);
 		}
 	}
 	else
-		header("Location: ../student.php?session=err"); // session doesn't exist (is not toggled on by instuctor)
+		header("Location: ".addSession("../student.php")."&session=err"); // session doesn't exist (is not toggled on by instuctor)
 }
 
 // called when admin starts/stops a session
@@ -85,7 +85,18 @@ else if ($_POST['action'] == 'toggle') {
 // save game info to gameSessionData
 else if ($_POST['action'] == 'update_gameSessionData') {
 
-	$QW_DAO->updateResults($_POST["groupId"],$_POST["username"],$_POST['quantity'],$_POST['revenue'],$_POST['profit'],$_POST['percentReturn'],$_POST['price'],$_POST['totalCost'],$_POST['complete'],$_POST['gameId'],$_POST['opponent'],$_POST['unitCost']);
+	$QW_DAO->updateResults(	$_POST['complete'],
+							$_POST["groupId"],
+							$_POST['gameId'],
+							$_POST["username"],
+							$_POST['opponent'],
+							$_POST['quantity'],
+							$_POST['revenue'],
+							$_POST['profit'],
+							$_POST['percentReturn'],
+							$_POST['price'],
+							$_POST['unitCost'],
+							$_POST['totalCost']		);
 
 	// $result = $mysqli->query('SELECT * FROM GameSessionData WHERE groupId="'.$_POST["groupId"].'" AND player="'.$_POST["username"].'"');
 

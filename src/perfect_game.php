@@ -11,13 +11,18 @@ Once submission is made, an overview of the past year's data is shown in a table
 
 Last Update: now using Tsugi WebSockets
 */
-include 'utils/sql_settup.php';
+//include 'utils/sql_settup.php';
 require_once "../tsugi_config.php";
+require_once "../dao/QW_DAO.php";
 
 use \Tsugi\Core\LTIX;
 use Tsugi\Core\WebSocket;
+use \QW\DAO\QW_DAO;
 
 $LAUNCH = LTIX::session_start();
+
+$p = $CFG->dbprefix . "econ_sim_";
+$QW_DAO = new QW_DAO($PDOX, $p);
 
 // Render view
 $OUTPUT->header();
@@ -25,7 +30,7 @@ $OUTPUT->header();
 if ($USER->instructor)
 	header("Location: ..");
 
-$gameInfo = getGameInfo((int)$_GET['session']);
+$gameInfo = $QW_DAO->getGameInfo($_GET['game']);
 ?>
 
 <!doctype html>
@@ -41,6 +46,10 @@ $gameInfo = getGameInfo((int)$_GET['session']);
    	<link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/animate.css/3.5.2/animate.css" />
    	<link rel="stylesheet" href="//cdn.jsdelivr.net/npm/alertifyjs@1.11.1/build/css/alertify.min.css"/>
     <link rel="stylesheet" href="//cdn.jsdelivr.net/npm/alertifyjs@1.11.1/build/css/themes/default.min.css"/>
+	<!-- Compressed CSS -->
+	<link rel="stylesheet" href="https://cdn.jsdelivr.net/npm/foundation-sites@6.6.3/dist/css/foundation.min.css" integrity="sha256-ogmFxjqiTMnZhxCqVmcqTvjfe1Y/ec4WaRj/aQPvn+I=" crossorigin="anonymous">
+
+
 
     <!--This func wouldn't work in safari unless it was up here -->
     <script type="text/javascript">
@@ -158,7 +167,7 @@ $gameInfo = getGameInfo((int)$_GET['session']);
 		</div>
 		<!--  End toolbar -->
 
-		<input type="hidden" id="sessionId" value="<?=$_GET['session']?>">
+		<input type="hidden" id="sessionId" value="<?=$_GET['game_id']?>">
 		<input type="hidden" id="usrname" value="<?=$USER->email?>">
 		<input type="hidden" id="mode" value="<?=$gameInfo['mode']?>">
 
@@ -431,14 +440,34 @@ $gameInfo = getGameInfo((int)$_GET['session']);
 	$OUTPUT->footerStart();
 	?>
 
+	<!--
     <script src="../js/vendor/jquery.js"></script>
     <script src="../js/vendor/what-input.js"></script>
     <script src="../js/vendor/foundation.js"></script>
     <script src="../js/app.js"></script>
+	-->
     <script src="../js/node_modules/chart.js/dist/Chart.js"></script>
     <script src="../node_modules/chartjs-plugin-annotation/chartjs-plugin-annotation.js"></script>
 	<script src="//cdn.jsdelivr.net/npm/alertifyjs@1.11.1/build/alertify.min.js"></script>
-    <script type="text/javascript">
+
+	<!--script src="https://code.jquery.com/jquery-3.5.1.min.js" integrity="sha256-9/aliU8dGd2tb6OSsuzixeV4y/faTqgFtohetphbbj0=" crossorigin="anonymous"></script>
+
+
+	<script src="https://cdnjs.cloudflare.com/ajax/libs/foundation/6.6.1/js/foundation.min.js" integrity="sha256-tdB5sxJ03S1jbwztV7NCvgqvMlVEvtcoJlgf62X49iM=" crossorigin="anonymous"></script>
+
+	<script src="https://cdn.jsdelivr.net/npm/foundation-sites@6.6.3/dist/js/foundation.min.js" integrity="sha256-pRF3zifJRA9jXGv++b06qwtSqX1byFQOLjqa2PTEb2o=" crossorigin="anonymous"></script>
+
+	<script src="https://cdnjs.cloudflare.com/ajax/libs/what-input/5.2.10/what-input.min.js" integrity="sha512-4snZhaL41OLVJbrysFHLFItNF9pb4zzm/X6ag4srEFALI0Hns+FVZg22G/nofqTGliAyaeWxoTjTZpmbU3enXQ==" crossorigin="anonymous"></script>
+
+	<script src="//cdn.kik.com/app/2.0.1/app.min.js"></script-->
+
+	<script src="https://code.jquery.com/jquery-3.4.1.min.js" integrity="sha256-CSXorXvZcTkaix6Yvo6HppcZGetbYMGWSFlBw8HfCJo=" crossorigin="anonymous"></script>
+    <script src="https://cdnjs.cloudflare.com/ajax/libs/what-input/5.2.6/what-input.min.js" integrity="sha256-yJJHNtgDvBsIwTM+t18nNnp9rEXdyZ1knji5sqm4mNw=" crossorigin="anonymous"></script>
+    <script src="https://cdnjs.cloudflare.com/ajax/libs/foundation/6.6.1/js/foundation.min.js" integrity="sha256-tdB5sxJ03S1jbwztV7NCvgqvMlVEvtcoJlgf62X49iM=" crossorigin="anonymous"></script>
+    <script src="../js/app.js"></script>
+
+
+	<script type="text/javascript">
     	broadcast_web_socket= null;
     	// from submission
     	var quantity; var prodLevel;
@@ -488,11 +517,11 @@ $gameInfo = getGameInfo((int)$_GET['session']);
     	// this is generated on admin side when session is toggled on so that all players have same price history
     	// retrieve price history from sql table w/ ajax
     	$.ajax({
-	  		url: "utils/game_util.php",
+	  		url: "<?= addSession("utils/game_util.php") ?>",
 	  		method: 'POST',
-  			data: { action: 'getHistory', id: <?=$gameInfo['id']?> },
-  			success: function(response) {
-  				priceHistory=response.split(',');
+  			data: { action: 'getHistory', game_id: <?=$gameInfo['game_id']?> },
+  			success: function(priceHistStr) {
+  				priceHistory=priceHistStr.split(',');
 
   				var genPriceData = [{
 					label: 'Price ($)',
@@ -506,7 +535,7 @@ $gameInfo = getGameInfo((int)$_GET['session']);
 					datasets: genPriceData
 				};
 
-				console.log(twentyFiveYrHist);
+				console.log(JSON.stringify(genPriceData['data']));
 
 
   				new Chart(document.getElementById("twentyFiveYrHist"), {
@@ -555,14 +584,14 @@ $gameInfo = getGameInfo((int)$_GET['session']);
 			if ('<?=$gameInfo['macro_econ']?>' == 'stable') { // regular economy/price growth
 				if (year-shockYear >= 5 && getRandomArbitrary()==3) {
 					price = 0.5+0.999*prevPrice+random(1,2)+random(0,10);
-					shockYear=i;
+					shockYear=year;
 				}
 				else
 					price = 0.5+0.999*prevPrice+random(1,2);
 			} else { // high inflation economy
 				if (year-shockYear >= 5 && getRandomArbitrary()==3) {
 					price = 0.125*year+0.999*prevPrice+random(1,2)+random(0,10);
-					shockYear=i;
+					shockYear=year;
 				}
 				else
 					price = 0.125*year+0.999*prevPrice+random(1,2);
@@ -601,7 +630,7 @@ $gameInfo = getGameInfo((int)$_GET['session']);
 			marginalCostHist.push(marginalCost);
 			productionLevelHist.push(prodLevel);
 
-	        // correctly format output with commas and negatives where neccissary
+	        // correctly format output with commas and negatives where neccessary
 	        var marketPriceString, revenueString, profitString, cumulativeString;
 	        marketPriceString = '$'+price.toLocaleString();
 	        if (revenue < 0 ) revenueString = '-$'+(revenue*(-1)).toLocaleString();
@@ -628,7 +657,7 @@ $gameInfo = getGameInfo((int)$_GET['session']);
 
 			// set cost screen stuff
 			$('#liSales').text(quantity+" Units");
-			'<?=$gameInfo["difficulty"]?>'=='advanced'?($('#liProdLevel').text("Level "+prodLevel)):($('#liProdLevel').parent().css('display','none'));
+			$('#liProdLevel').text('Level ' + prodLevel);
 			$('#liPrice2').text('$'+price.toLocaleString());
 			$('#liMarginal').text('$'+marginalCost+"/Unit");
 			$('#liProduction').text('$'+totalCost.toLocaleString());
@@ -643,10 +672,20 @@ $gameInfo = getGameInfo((int)$_GET['session']);
 
 			// call func to submit data in querry
 			$.ajax({
-		  		url: "utils/session.php",
+		  		url: "<?= addSession("utils/session.php") ?>",
 		  		method: 'POST',
-	  			data: { action: 'update_gameSessionData', groupId: groupId, username: $('#usrname').val(), opponent: null, quantity: quantity, revenue: revenue,
-	  				profit: profit, percentReturn: percentReturn.toPrecision(4), price: price, unitCost: marginalCost, totalCost: totalCost, complete: gameOver?1:0, gameId: <?= $gameInfo['id'] ?>  }
+	  			data: { action: 'update_gameSessionData', complete: gameOver?1:0,
+														  groupId: groupId,
+														  gameId: <?= $gameInfo['game_id'] ?>,
+														  username: $('#usrname').val(),
+														  opponent: null,
+														  quantity: quantity,
+														  revenue: revenue,
+														  profit: profit,
+														  percentReturn: percentReturn.toPrecision(4),
+														  price: price,
+														  unitCost: marginalCost,
+														  totalCost: totalCost		}
 	  		});
 
 	  		// send message to tell instructor results to update
@@ -669,7 +708,7 @@ $gameInfo = getGameInfo((int)$_GET['session']);
 		function leaveGame() { // fires when one player hits exit game button in side menu
 			// remove student from gamesession table
 			$.ajax({
-		  		url: "utils/session.php",
+		  		url: "<?= addSession("utils/session.php") ?>",
 		  		method: 'POST',
 	  			data: { action: 'remove_student', id: $('#sessionId').val(), player: $('#usrname').val() }
 	  		});
@@ -760,9 +799,9 @@ $gameInfo = getGameInfo((int)$_GET['session']);
 
         	// ajax to get data from sql for chart and table displays
         	$.ajax({
-		  		url: "utils/session.php",
+		  		url: "<?= addSession("utils/session.php") ?>",
 		  		method: 'POST',
-	  			data: { action: 'retrieve_gameSessionData', gameId: <?=$gameInfo['id']?>, valueType: selectedValType },
+	  			data: { action: 'retrieve_game_results', gameId: <?=$gameInfo['game_id']?>, valueType: selectedValType },
 	  			success: function(response) {
 	  				var json = JSON.parse(response);
 
@@ -772,9 +811,11 @@ $gameInfo = getGameInfo((int)$_GET['session']);
 	  					chartData.push(indivData);
 	  				}
 
+					/*
 		        	// to change raw chart data to the desired array of averages for each year
-		        	var counter = 0, i = 0, sum = 0;
-		        	while (i <= 20) { // loop a maximum of 20 times (the max number of years for game)
+		        	var students = 0, year = 0, sum = 0, counter = 0;
+		        	// while (i <= 20) { // loop a maximum of 20 times (the max number of years for game)
+		        	while (i < 20) { // loop a maximum of 20 times (the max number of years for game)
 		        		for (j = 0; j < chartData.length; j++) { //
 		        			sum += chartData[j][i];
 		        			counter++;
@@ -784,6 +825,22 @@ $gameInfo = getGameInfo((int)$_GET['session']);
 		        		averages.push((sum/counter).toFixed(2));
 		        		sum = 0; counter = 0; i++;
 		        	}
+					*/
+
+
+					for(let year = 0; year < 20; year++){
+						// did not use reduce instead of for loop to facilitate early exit
+
+						res =	chartData.reduce(
+									(running, curr) => (
+									[	running[0] + (curr.length > year ? curr[year] : 0),
+									running[1] + (curr.length > year)]
+							), [0,0]
+						)
+
+						if (res[1] == 0) break;
+						averages.push(res[0]/res[1]);
+					}
 
 		        	if (industryChart) { // if industryChart exists reset data and update it
 		        		industryChart.data.datasets[0].data = [];
@@ -821,7 +878,7 @@ $gameInfo = getGameInfo((int)$_GET['session']);
 		        },
 		        {
 		            label: 'Equilibrium',
-		            data: equilibrium.splice(0, $('#numRounds').val()),
+		            data: equilibriumHist.splice(0, $('#numRounds').val()),
 		            fill: false,
 		            pointRadius: 0,
 		            borderColor: 'rgba(0,0,255,1)',
@@ -1069,7 +1126,7 @@ $gameInfo = getGameInfo((int)$_GET['session']);
 		}
 		else if (to_section == "cost_section") {
 			var usrData = {
-				label: 'Yours Sales (Units)',
+				label: 'Your Sales (Units)',
 				data: quantityHistory,
 				backgroundColor: 'rgba(255, 165, 0, 0.2)',
 				borderColor: 'rgba(255,165,0,1)',

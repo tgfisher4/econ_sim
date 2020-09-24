@@ -50,7 +50,7 @@ $DATABASE_INSTALL = array(
     price_hist          VARCHAR(300)    DEFAULT NULL,
     reg_date            TIMESTAMP,
 
-    CONSRTAINT `{$CFG->dbprefix}{$app_p}games_ibfk_1`
+    CONSTRAINT `{$CFG->dbprefix}{$app_p}games_ibfk_1`
         FOREIGN KEY (`course_id`)
         REFERENCES `{$CFG->dbprefix}{$app_p}courses` (`course_id`)
         ON DELETE CASCADE ON UPDATE CASCADE,
@@ -66,23 +66,23 @@ $DATABASE_INSTALL = array(
     /* result_id           INT(6)          UNSIGNED AUTO_INCREMENT, */
     complete            BOOLEAN         DEFAULT FALSE,
     group_id            VARCHAR(10)     NOT NULL,
-    game_id             INT(6)          NOT NULL,
+    game_id             INT(6)          UNSIGNED NOT NULL,
     player              VARCHAR(30)     NOT NULL,
     opponent            VARCHAR(30)     DEFAULT NULL,
     player_quantity     VARCHAR(300)    NOT NULL,
-    player_profit       VARCHAR(300)    NOT NULL,
     player_revenue      VARCHAR(300)    NOT NULL,
+    player_profit       VARCHAR(300)    NOT NULL,
     player_return       VARCHAR(300)    NOT NULL,
     price               VARCHAR(300)    NOT NULL,
     unit_cost           VARCHAR(300)    NOT NULL,
-    total_cost          VARCHAR(300)    NOT NULL/*,*/
+    total_cost          VARCHAR(300)    NOT NULL,
 
-    CONSRTAINT `{$CFG->dbprefix}{$app_p}results_ibfk_1`
+    CONSTRAINT `{$CFG->dbprefix}{$app_p}results_ibfk_1`
         FOREIGN KEY (`game_id`)
         REFERENCES `{$CFG->dbprefix}{$app_p}games` (`game_id`)
         ON DELETE CASCADE ON UPDATE CASCADE,
 
-    UNIQUE(group_id, player)
+    CONSTRAINT results_uq_1 UNIQUE(group_id, player)
 
     /* PRIMARY KEY(result_id) */
 
@@ -98,7 +98,7 @@ $DATABASE_INSTALL = array(
     player1_data        INT(20)         DEFAULT NULL,
     player2             VARCHAR(30)     DEFAULT NULL,
 
-    CONSRTAINT `{$CFG->dbprefix}{$app_p}live_multiplayer_groups_ibfk_1`
+    CONSTRAINT `{$CFG->dbprefix}{$app_p}live_multiplayer_groups_ibfk_1`
         FOREIGN KEY (`game_id`)
         REFERENCES `{$CFG->dbprefix}{$app_p}games` (`game_id`)
         ON DELETE CASCADE ON UPDATE CASCADE,

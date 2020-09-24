@@ -102,7 +102,7 @@ class QW_DAO {
     function getPriceHist($game_id) {
         $query = "SELECT price_hist FROM {$this->p}games WHERE game_id = :game_id;";
         $arr = array(':game_id' => $game_id);
-        return $this->PDOX->rowDie($query, $arr);
+        return $this->PDOX->rowDie($query, $arr)['price_hist'];
     }
 
     function gameExists($game_id) {
@@ -129,64 +129,84 @@ class QW_DAO {
             //$this->PDOX->queryDie($query, $arr);
             return false;
         } else {
-            $toggledOn=false;
+            //$toggledOn=false;
             $query = "UPDATE {$this->p}games SET live = 1, price_hist = :hist WHERE game_id = :game_id";
-            $arr = array(':game_id' => $game_id, ':hist'=>$priceHist);
+            $arr = array(':game_id' => $game_id, ':hist'=> $priceHist);
             $this->PDOX->queryDie($query, $arr);
             return true;
         }
     }
 
-    function updateResults($group_id, $username, $quantity, $revenue, $profit, $percentReturn, $price, $totalCost, $complete, $game_id, $opponent, $unitCost) {
-        $query = "SELECT * FROM {$this->p}results WHERE groupId = :groupId AND player = :player;";
-        $arr = array(':group_id' => $group_id, ':username' => $username);
+    function updateResults($complete, $group_id, $game_id, $username, $opponent, $quantity, $revenue, $profit, $return, $price, $unit_cost, $total_cost) {
+        $query = "SELECT * FROM {$this->p}results WHERE group_id = :group_id AND player = :player;";
+        $arr = array(':group_id' => $group_id, ':player' => $username);
         $data = $this->PDOX->rowDie($query, $arr);
 
         if ($data) {
-            $quantityHist   = $data['player_quantity'].",".$quantity;
-            $revenueHist    = $data['player_revenue'].",".$revenue;
-            $profitHist     = $data['player_profit'].",".$profit;
-            $returnHist     = $data['player_return'].",".$percentReturn;
-            $priceHist      = $data['price'].",".$price;
-            $totalCostHist  = $data['total_cost'].",".$totalCost;
+            $quantityHist   = $data['player_quantity']  .",".   $quantity;
+            $revenueHist    = $data['player_revenue']   .",".   $revenue;
+            $profitHist     = $data['player_profit']    .",".   $profit;
+            $returnHist     = $data['player_return']    .",".   $return;
+            $priceHist      = $data['price']            .",".   $price;
+            $unitCostHist   = $data['unit_cost']        .",".   $unit_cost;
+            $totalCostHist  = $data['total_cost']       .",".   $total_cost;
 
+            // unit cost not updated?
             $query = "UPDATE {$this->p}results
-                      SET player_quantity   =  :quantity,
+                      SET
+                          complete          =  :complete,
+                          -- this doesn't seem like something we need to update
+                          /* game_id           =  :game_id */
+                          player_quantity   =  :quantity,
                           player_revenue    =  :revenue,
                           player_profit     =  :profit,
                           player_return     =  :return,
                           price             =  :price,
-                          total_cost        =  :cost,
-                          complete          =  :complete,
-                          game_id           =  :game_id
+                          unit_cost         =  :unit_cost,
+                          total_cost        =  :total_cost
                       WHERE group_id = :group_id AND player = :player";
-            $arr = array(':group_id'        => $group_id,
-                         ':player'          => $username,
+            $arr = array(':complete'        => $complete,
+                         // doesn't seem like something we need to update
+                         // ':game_id'         => $game_id,
                          ':quantity'        => $quantity,
                          ':revenue'         => $revenue,
                          ':profit'          => $profit,
-                         ':return'          => $percentReturn,
+                         ':return'          => $return,
                          ':price'           => $price,
-                         ':cost'            => $totalCost,
-                         ':complete'        => $complete,
-                         ':game_id'         => $game_id);
-            $this->PDOX->rowDie($query, $arr);
+                         ':unit_cost'       => $unitCostHist,
+                         ':total_cost'      => $total_cost,
+                         ':group_id'        => $group_id,
+                         ':player'          => $username    );
+
+            $arr = array(':complete'        => $complete,
+                         // doesn't seem like something we need to update
+                         // ':game_id'         => $game_id,
+                         ':quantity'        => $quantityHist,
+                         ':revenue'         => $revenueHist,
+                         ':profit'          => $profitHist,
+                         ':return'          => $returnHist,
+                         ':price'           => $priceHist,
+                         ':unit_cost'       => $unitCostHist,
+                         ':total_cost'      => $totalCostHist,
+                         ':group_id'        => $group_id,
+                         ':player'          => $username    );
+
+            $this->PDOX->queryDie($query, $arr);
         } else {
             $query = "INSERT INTO {$this->p}results (group_id, game_id, player, opponent, player_quantity, player_revenue, player_profit, player_return, price, unit_cost, total_cost)
-                      VALUES (:group_id, :game_id, :player, :opp, :quantity, :revenue, :profit, :return, :price, :unitCost, :ttlCost)";
+                      VALUES (:group_id, :game_id, :player, :opponent, :quantity, :revenue, :profit, :return, :price, :unit_cost, :total_cost)";
             $arr = array(':group_id'        => $group_id,
+                         ':game_id'         => $game_id,
                          ':player'          => $username,
-                         ':opp'             => $opponent,
+                         ':opponent'        => $opponent,
                          ':quantity'        => $quantity,
                          ':revenue'         => $revenue,
                          ':profit'          => $profit,
-                         ':return'          => $percentReturn,
+                         ':return'          => $return,
                          ':price'           => $price,
-                         ':unitCost'        => $unitCost,
-                         ':ttlCost'         => $totalCost,
-                         ':complete'        => $complete,
-                         ':game_id'         => $game_id);
-            $this->PDOX->rowDie($query, $arr);
+                         ':unit_cost'       => $unit_cost,
+                         ':total_cost'      => $total_cost );
+            $this->PDOX->queryDie($query, $arr);
         }
     }
 
@@ -200,8 +220,14 @@ class QW_DAO {
     }
 
     function retrieveValueFromGameResults($val, $game_id){//, $groupId, $usr) {
-        $query = "SELECT player, group_id, :val FROM {$this->p}results WHERE game_id = :game_id;";
-        $arr = array(':game_id' => $game_id, ':val' => $val);
+        $valid_vals = ["player_quantity", "price", "player_revenue", "player_profit"];
+        if (!in_array($val, $valid_vals))       return json_encode([]);
+        // marker cannot be used to specify column name
+        // https://stackoverflow.com/questions/46259185/how-to-use-prepared-statements-in-php-to-choose-with-select-a-column-of-the-da
+        // instead, I will use backticks and inject $val directly into the query
+        // this should be ok since I am double checking that $val is one of a few expected values
+        $query = "SELECT player, group_id, `${val}` FROM {$this->p}results WHERE game_id = :game_id";
+        $arr = array(':game_id' => $game_id);
 
         $data=[];
         foreach ($this->PDOX->allRowsDie($query, $arr) as $row) {
