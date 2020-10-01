@@ -59,7 +59,6 @@ $DATABASE_INSTALL = array(
 
 ) ENGINE = InnoDB DEFAULT CHARSET=utf8"),
 
-
     array( "{$CFG->dbprefix}{$app_p}results",
 
    "create table {$CFG->dbprefix}{$app_p}results(
@@ -88,7 +87,6 @@ $DATABASE_INSTALL = array(
 
 ) ENGINE = InnoDB DEFAULT CHARSET=utf8"),
 
-
     array( "{$CFG->dbprefix}{$app_p}live_multiplayer_groups",
 
    "create table {$CFG->dbprefix}{$app_p}live_multiplayer_groups (
@@ -105,5 +103,17 @@ $DATABASE_INSTALL = array(
 
     PRIMARY KEY (group_id)
 
-) ENGINE = InnoDB DEFAULT CHARSET=utf8")
+) ENGINE = InnoDB DEFAULT CHARSET=utf8"),
+
+    array(),
+
+    "create table {$CFG->dbprefix}{$app_p}groups (
+    group_id            INT(6)          UNSIGNED AUTO_INCREMENT,
+    player1             VARCHAR(30)     DEFAULT NULL,
+    player2             VARCHAR(30)     DEFAULT NULL,
+    player_submission   INT(20)         DEFAULT NULL,
+    player_1_submitted  BOOLEAN         DEFAULT FALSE,
+
+    game_id
+    )"
 );

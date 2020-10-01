@@ -5,7 +5,7 @@
 */
 
 ini_set('display_errors', 1); error_reporting(-1);
-include 'sql_settup.php';
+//include 'sql_settup.php';
 require_once "../../tsugi_config.php";
 require_once('../../dao/QW_DAO.php');
 
@@ -18,7 +18,7 @@ $p = $CFG->dbprefix . "econ_sim_";
 $QW_DAO = new QW_DAO($PDOX, $p);
 
 if ($_POST['action']=='join_multi') {
-	$response = $QW_DAO->joinMultiplayerGame($_POST['sessionId'],$_POST['username'],$_POST['groupId']);
+	$response = $QW_DAO->joinMultiplayerGame($_POST['game_id'],$_POST['username'],$_POST['group_id']);
 
 	if ($response)
 		echo json_encode($response);

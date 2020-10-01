@@ -450,17 +450,6 @@ $gameInfo = $QW_DAO->getGameInfo($_GET['game']);
     <script src="../node_modules/chartjs-plugin-annotation/chartjs-plugin-annotation.js"></script>
 	<script src="//cdn.jsdelivr.net/npm/alertifyjs@1.11.1/build/alertify.min.js"></script>
 
-	<!--script src="https://code.jquery.com/jquery-3.5.1.min.js" integrity="sha256-9/aliU8dGd2tb6OSsuzixeV4y/faTqgFtohetphbbj0=" crossorigin="anonymous"></script>
-
-
-	<script src="https://cdnjs.cloudflare.com/ajax/libs/foundation/6.6.1/js/foundation.min.js" integrity="sha256-tdB5sxJ03S1jbwztV7NCvgqvMlVEvtcoJlgf62X49iM=" crossorigin="anonymous"></script>
-
-	<script src="https://cdn.jsdelivr.net/npm/foundation-sites@6.6.3/dist/js/foundation.min.js" integrity="sha256-pRF3zifJRA9jXGv++b06qwtSqX1byFQOLjqa2PTEb2o=" crossorigin="anonymous"></script>
-
-	<script src="https://cdnjs.cloudflare.com/ajax/libs/what-input/5.2.10/what-input.min.js" integrity="sha512-4snZhaL41OLVJbrysFHLFItNF9pb4zzm/X6ag4srEFALI0Hns+FVZg22G/nofqTGliAyaeWxoTjTZpmbU3enXQ==" crossorigin="anonymous"></script>
-
-	<script src="//cdn.kik.com/app/2.0.1/app.min.js"></script-->
-
 	<script src="https://code.jquery.com/jquery-3.4.1.min.js" integrity="sha256-CSXorXvZcTkaix6Yvo6HppcZGetbYMGWSFlBw8HfCJo=" crossorigin="anonymous"></script>
     <script src="https://cdnjs.cloudflare.com/ajax/libs/what-input/5.2.6/what-input.min.js" integrity="sha256-yJJHNtgDvBsIwTM+t18nNnp9rEXdyZ1knji5sqm4mNw=" crossorigin="anonymous"></script>
     <script src="https://cdnjs.cloudflare.com/ajax/libs/foundation/6.6.1/js/foundation.min.js" integrity="sha256-tdB5sxJ03S1jbwztV7NCvgqvMlVEvtcoJlgf62X49iM=" crossorigin="anonymous"></script>

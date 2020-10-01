@@ -211,10 +211,12 @@ class QW_DAO {
     }
 
     function removeFromSession($group_id) {
+        /*
         $query = "DELETE FROM {$this->p}results WHERE group_id = :group_id";
         $arr = array(':group_id' => $group_id);
         $this->PDOX->queryDie($query, $arr);
-
+        */
+        // due to table constraints, results will automatically drop rows corresponding to the group dropped from live_multiplayer_groups
         $query = "DELETE FROM {$this->p}live_multiplayer_groups WHERE group_id = :group_id";
         $this->PDOX->queryDie($query, $arr);
     }
@@ -238,19 +240,22 @@ class QW_DAO {
         return json_encode($data);
     }
 
+    //
     function joinMultiplayerGame($game_id, $username, $group_id) {
         $query = "SELECT * FROM {$this->p}live_multiplayer_groups WHERE game_id = :game_id AND player2 IS NULL LIMIT 1;";
         $arr = array(':game_id' => $game_id);
         $game = $this->PDOX->rowDie($query, $arr);
 
         if ($game) {
-            $query = "UPDATE {$this->p}live_multiplayer_groups SET player2 = :usr WHERE game_id = :game_id;";
+            $query = "UPDATE {$this->p}live_multiplayer_groups SET game_id = NULL, player2 = :player WHERE game_id = :game_id;";
             $arr = array(':player' => $username, ':game_id' => $game['id']);
             $this->PDOX->rowDie($query, $arr);
             return [$game['group_id'], $game['player1']];
         } else {
-            $query = "INSERT INTO {$this->p}live_multiplayer_groups (group_id, game_id, player1) VALUES (:group_id, :game_id, :player1)";
-            $arr = array(':group_id' => $group_id, ':game_id' => $game_id, ':player1' => $username);
+            //$query = "INSERT INTO {$this->p}live_multiplayer_groups (group_id, game_id, player1) VALUES (:group_id, :game_id, :player1)";
+            //$arr = array(':group_id' => $group_id, ':game_id' => $game_id, ':player1' => $username);
+            $query = "INSERT INTO {$this->p}live_multiplayer_groups (game_id, player1) VALUES (:game_id, :player1)";
+            $arr = array(':game_id' => $game_id, ':player1' => $username);
             $this->PDOX->queryDie($query, $arr);
         }
     }
@@ -258,17 +263,17 @@ class QW_DAO {
     function multiplayerSubmission($group_id, $username, $quantity) {
         $query = "SELECT * FROM {$this->p}live_multiplayer_groups WHERE group_id = :group_id LIMIT 1;";
         $arr = array(':groupId' => $group_id);
-        $group = $this->PDOX->rowDie($query, $arr);
+        $existing_data = $this->PDOX->rowDie($query, $arr);
 
-        if ($session['player1'] == NULL) {
+        if ($existing_data['player1'] == NULL) {
             $query = "UPDATE {$this->p}live_multiplayer_groups SET player1 = :username, player1_data = :quantity WHERE group_id = :group_id;";
             $arr = array(':quantity' => $quantity, ':group_id' => $group['group_id']);
             $this->PDOX->queryDie($query, $arr);
             return FALSE;
         }
         else {
-            $query = "UPDATE {$this->p}live_multiplayer_groups SET player1 = :username, player1_data = :quantity WHERE group_id = :group_id;";
-            $arr = array(':quantity' => $quantity, ':group_id' => $group['group_id']);
+            //$query = "UPDATE {$this->p}live_multiplayer_groups SET player1 = :username, player1_data = :quantity WHERE group_id = :group_id;";
+            //$arr = array(':quantity' => $quantity, ':group_id' => $group['group_id']);
             $data = $this->PDOX->rowDie($query, $arr);
 
             // send back array with usernames and their respective submission data

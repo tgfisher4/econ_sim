@@ -168,7 +168,7 @@ if ($gameInfo['mode'] == 'multi') $startGame = false;
 		</div>
 		<!--  End toolbar -->
 
-		<input type="hidden" id="sessionId" value="<?=$_GET['session']?>">
+		<input type="hidden" id="game_id" value="<?=$_GET['game']?>">
 		<input type="hidden" id="usrname" value="<?=$USER->email?>">
 		<input type="hidden" id="opponent" value="">
 		<input type="hidden" id="mode" value="<?=$gameInfo['mode']?>">
@@ -414,12 +414,22 @@ if ($gameInfo['mode'] == 'multi') $startGame = false;
 		$OUTPUT->footerStart();
 	?>
 
-    <script src="../js/vendor/jquery.js"></script>
+    <!--script src="../js/vendor/jquery.js"></script>
     <script src="../js/vendor/what-input.js"></script>
     <script src="../js/vendor/foundation.js"></script>
     <script src="../js/app.js"></script>
     <script src="../js/node_modules/chart.js/dist/Chart.js"></script>
-	<script src="//cdn.jsdelivr.net/npm/alertifyjs@1.11.1/build/alertify.min.js"></script>
+	<script src="//cdn.jsdelivr.net/npm/alertifyjs@1.11.1/build/alertify.min.js"></script-->
+
+    <!-- absolute dependencies as seen in perfect_game -->
+    <script src="../js/node_modules/chart.js/dist/Chart.js"></script>
+    <script src="../node_modules/chartjs-plugin-annotation/chartjs-plugin-annotation.js"></script>
+    <script src="//cdn.jsdelivr.net/npm/alertifyjs@1.11.1/build/alertify.min.js"></script>
+    <script src="https://code.jquery.com/jquery-3.4.1.min.js" integrity="sha256-CSXorXvZcTkaix6Yvo6HppcZGetbYMGWSFlBw8HfCJo=" crossorigin="anonymous"></script>
+    <script src="https://cdnjs.cloudflare.com/ajax/libs/what-input/5.2.6/what-input.min.js" integrity="sha256-yJJHNtgDvBsIwTM+t18nNnp9rEXdyZ1knji5sqm4mNw=" crossorigin="anonymous"></script>
+    <script src="https://cdnjs.cloudflare.com/ajax/libs/foundation/6.6.1/js/foundation.min.js" integrity="sha256-tdB5sxJ03S1jbwztV7NCvgqvMlVEvtcoJlgf62X49iM=" crossorigin="anonymous"></script>
+    <script src="../js/app.js"></script>
+
     <script type="text/javascript">
     	// submissions
     	var quantity, oppQuantity;
@@ -463,10 +473,11 @@ if ($gameInfo['mode'] == 'multi') $startGame = false;
 	    }
 	    else {
 	    	$.ajax({
-		  		url: "utils/websocket_util.php",
+		  		url: '<?= addSession("utils/websocket_util.php") ?>',
 		  		method: 'POST',
-	  			data: { action: 'join_multi', sessionId: $('#sessionId').val(), username: $('#usrname').val(), groupId: groupId },
+	  			data: { action: 'join_multi', game_id: $('#game_id').val(), username: $('#usrname').val(), group_id: groupId },
 	  			success: function(response) {
+                    console.log(response);
 	  				// if response is returned, the user joined a waiting player, so game can start
 	  				if (response) {
 	  					let json = JSON.parse(response);
@@ -549,9 +560,9 @@ if ($gameInfo['mode'] == 'multi') $startGame = false;
 
 				  	// save equilibrium to database for display in instructor results
 				  	$.ajax({
-				  		url: "utils/game_util.php",
+				  		url: '<?= addSession("utils/game_util.php") ?>',
 				  		method: 'POST',
-			  			data: { equilibrium: json['equilibrium'], id: $('#sessionId').val() }
+			  			data: { equilibrium: json['equilibrium'], id: $('#game_id').val() }
 			  		});
 
 					// update values based on retrieved data
@@ -609,7 +620,7 @@ if ($gameInfo['mode'] == 'multi') $startGame = false;
 
 					// call func to submit data in querry
 					$.ajax({
-				  		url: "utils/session.php",
+				  		url: '<?= addSession("utils/session.php") ?>',
 				  		method: 'POST',
 			  			data: { action: 'update_gameSessionData', groupId: groupId, username: $('#usrname').val(), opponent: null, quantity: quantity, revenue: json['totalRevenue'],
 			  				profit: json['profit'], percentReturn: json['percentReturn'].toPrecision(4), price: json['demand'], unitCost: json['unitCost'], totalCost: json['totalCost'], complete: gameOver?1:0, gameId: <?= $gameInfo['game_id'] ?>  }
@@ -620,11 +631,11 @@ if ($gameInfo['mode'] == 'multi') $startGame = false;
 					if (!broadcast_web_socket) {
 				  		broadcast_web_socket = tsugiNotifySocket();
 				  		broadcast_web_socket.onopen = function(evt) {
-							broadcast_web_socket.send($('#sessionId').val());
+							broadcast_web_socket.send($('#game_id').val());
 						}
 					}
 					else
-						broadcast_web_socket.send($('#sessionId').val());
+						broadcast_web_socket.send($('#game_id').val());
 
 				}
 			});
@@ -669,9 +680,9 @@ if ($gameInfo['mode'] == 'multi') $startGame = false;
 
 				  	// save equilibrium to database for display in instructor results
 				  	$.ajax({
-				  		url: "utils/game_util.php",
+				  		url: '<?= addSession("utils/game_util.php") ?>',
 				  		method: 'POST',
-			  			data: { equilibrium: json['equilibrium'], id: $('#sessionId').val() }
+			  			data: { equilibrium: json['equilibrium'], id: $('#game_id').val() }
 			  		});
 
 					// update values based on retrieved data
@@ -756,7 +767,7 @@ if ($gameInfo['mode'] == 'multi') $startGame = false;
 
 					// call func to submit data in query
 					$.ajax({
-				  		url: "utils/session.php",
+				  		url: '<?= addSession("utils/session.php") ?>',
 				  		method: 'POST',
 			  			data: { action: 'update_gameSessionData', groupId: groupId, username: $('#usrname').val(), opponent: $('#opponent').val(), quantity: quantity,
 			  				revenue: json['revenue1'], profit: json['profit1'], percentReturn: json['percentReturn1'].toPrecision(4), price: json['demand'],
@@ -769,10 +780,10 @@ if ($gameInfo['mode'] == 'multi') $startGame = false;
 			  			if (!broadcast_web_socket) {
 							broadcast_web_socket = tsugiNotifySocket();
 							broadcast_web_socket.onopen = function(evt) {
-								broadcast_web_socket.send($('#sessionId').val());
+								broadcast_web_socket.send($('#game_id').val());
 							}
 			  			}
-						broadcast_web_socket.send($('#sessionId').val());
+						broadcast_web_socket.send($('#game_id').val());
 					}
 				}
 			});
@@ -926,7 +937,7 @@ if ($gameInfo['mode'] == 'multi') $startGame = false;
 		// Multiplayer mode
 		else {
 	  		$.ajax({
-		  		url: "utils/websocket_util.php",
+		  		url: '<?= addSession("utils/websocket_util.php") ?>',
 		  		method: 'POST',
 	  			data: { action: 'submit_multi', username: $('#usrname').val(), groupId: groupId, quantity: quantity },
 	  			success: function(response) {
@@ -949,7 +960,7 @@ if ($gameInfo['mode'] == 'multi') $startGame = false;
 					  		if (evt.data==$('#usrname').val().substring(0, $('#usrname').val().indexOf('@'))) {
 					  			// grab opponent's submission data from database
 					  			$.ajax({
-							  		url: "utils/websocket_util.php",
+							  		url: '<?= addSession("utils/websocket_util.php") ?>',
 							  		method: 'POST',
 						  			data: { action: 'get_opponent_data', groupId: groupId },
 						  			success: function(response) {
@@ -985,7 +996,7 @@ if ($gameInfo['mode'] == 'multi') $startGame = false;
 		// if game is not over, remove student from session table so they can restart game
 		if (!gameIsComplete)
 			$.ajax({
-		  		url: <?= addSession("utils/session.php") ?>,
+		  		url: "<?= addSession("utils/session.php") ?>",
 		  		method: 'POST',
 	  			data: { action: 'remove_student', groupId: groupId }
 	  		});
@@ -996,9 +1007,9 @@ if ($gameInfo['mode'] == 'multi') $startGame = false;
 
   		// exit to student.php
   		if (!gameIsComplete)
-  			window.location = urlPrefix+'src/student.php?session=left';
+  			window.location = urlPrefix + '<?= addSession("src/student.php?session=left") ?>';
   		else
-  			window.location = urlPrefix+'src/student.php?session=comp';
+  			window.location = urlPrefix + '<?= addSession("src/student.php?session=comp") ?>';
 	}
 
 	window.onbeforeunload = function () {

@@ -123,7 +123,7 @@ else if ($_POST['action'] == 'update_gameSessionData') {
 
 // remove student from GameSessionData
 else if ($_POST['action'] == 'remove_student') {
-	$QW_DAO->removeFromSession($_POST['groupId']);
+	$QW_DAO->removeFromSession($_POST['group_id']);
 	// $mysqli->query("DELETE FROM GameSessionData WHERE `groupId`='".$_POST['groupId']."'");
 	// $mysqli->query("DELETE FROM Sessions WHERE `groupId`='".$_POST['groupId']."'");
 }

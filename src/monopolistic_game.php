@@ -12,13 +12,18 @@ Advanced: output=Q and prices, marketing, production facility development, produ
 
 Last Update:
 */
-include 'utils/sql_settup.php';
+//include 'utils/sql_settup.php';
 require_once "../tsugi_config.php";
+require_once "../dao/QW_DAO.php";
 
 use \Tsugi\Core\LTIX;
 use Tsugi\Core\WebSocket;
+use \QW\DAO\QW_DAO;
 
 $LAUNCH = LTIX::session_start();
+
+$p = $CFG->dbprefix . "econ_sim_";
+$QW_DAO = new QW_DAO($PDOX, $p);
 
 // Render view
 $OUTPUT->header();
@@ -26,7 +31,7 @@ $OUTPUT->header();
 if ($USER->instructor)
 	header("Location: ..");
 
-$gameInfo = getGameInfo((int)$_GET['session']);
+$gameInfo = $QW_DAO->getGameInfo((int)$_GET['game']);
 ?>
 
 <!doctype html>
@@ -200,7 +205,7 @@ $gameInfo = getGameInfo((int)$_GET['session']);
 		</div>
 		<!--  End toolbar -->
 
-		<input type="hidden" id="sessionId" value="<?=$_GET['session']?>">
+		<input type="hidden" id="game_id" value="<?=$_GET['session']?>">
 		<input type="hidden" id="usrname" value="<?=$USER->email?>">
 		<input type="hidden" id="mode" value="<?=$gameInfo['mode']?>">
 
@@ -504,12 +509,21 @@ $gameInfo = getGameInfo((int)$_GET['session']);
 	$OUTPUT->footerStart();
 	?>
 
-    <script src="../js/vendor/jquery.js"></script>
+    <!--script src="../js/vendor/jquery.js"></script>
     <script src="../js/vendor/what-input.js"></script>
     <script src="../js/vendor/foundation.js"></script>
     <script src="../js/app.js"></script>
     <script src="../js/node_modules/chart.js/dist/Chart.js"></script>
+	<script src="//cdn.jsdelivr.net/npm/alertifyjs@1.11.1/build/alertify.min.js"></script-->
+
+
+	<script src="../js/node_modules/chart.js/dist/Chart.js"></script>
+	<script src="../node_modules/chartjs-plugin-annotation/chartjs-plugin-annotation.js"></script>
 	<script src="//cdn.jsdelivr.net/npm/alertifyjs@1.11.1/build/alertify.min.js"></script>
+	<script src="https://code.jquery.com/jquery-3.4.1.min.js" integrity="sha256-CSXorXvZcTkaix6Yvo6HppcZGetbYMGWSFlBw8HfCJo=" crossorigin="anonymous"></script>
+	<script src="https://cdnjs.cloudflare.com/ajax/libs/what-input/5.2.6/what-input.min.js" integrity="sha256-yJJHNtgDvBsIwTM+t18nNnp9rEXdyZ1knji5sqm4mNw=" crossorigin="anonymous"></script>
+	<script src="https://cdnjs.cloudflare.com/ajax/libs/foundation/6.6.1/js/foundation.min.js" integrity="sha256-tdB5sxJ03S1jbwztV7NCvgqvMlVEvtcoJlgf62X49iM=" crossorigin="anonymous"></script>
+	<script src="../js/app.js"></script>
     <script type="text/javascript">
     	broadcast_web_socket = null;
 
@@ -704,18 +718,18 @@ $gameInfo = getGameInfo((int)$_GET['session']);
 		  		url: "utils/session.php",
 		  		method: 'POST',
 	  			data: { action: 'update_gameSessionData', groupId: groupId, username: $('#usrname').val(), opponent: null, quantity: quantity, revenue: revenue,
-	  				profit: profit, percentReturn: percentReturn.toPrecision(4), price: price, unitCost: marginalCost, totalCost: totalCost, complete: gameOver?1:0, gameId: <?= $gameInfo['id'] ?>  }
+	  				profit: profit, percentReturn: percentReturn.toPrecision(4), price: price, unitCost: marginalCost, totalCost: totalCost, complete: gameOver?1:0, gameId: <?= $gameInfo['game_id'] ?>  }
 	  		});
 
 	  		// send message to tell instructor results to update
 	  		if (!broadcast_web_socket) {
 		  		broadcast_web_socket = tsugiNotifySocket();
 		  		broadcast_web_socket.onopen = function(evt) {
-					broadcast_web_socket.send($('#sessionId').val());
+					broadcast_web_socket.send($('#game_id').val());
 				}
 			}
 			else
-				broadcast_web_socket.send($('#sessionId').val());
+				broadcast_web_socket.send($('#game_id').val());
 
 		}
 
@@ -726,9 +740,9 @@ $gameInfo = getGameInfo((int)$_GET['session']);
 			$.ajax({
 		  		url: "utils/session.php",
 		  		method: 'POST',
-	  			data: { action: 'remove_student', id: $('#sessionId').val(), player: $('#usrname').val() }
+	  			data: { action: 'remove_student', game_id: $('#game_id').val(), player: $('#usrname').val() }
 	  		});
-			window.location = urlPrefix+'src/student.php?session=left';
+			window.location = urlPrefix + '<?= addSession("src/student.php?session=left") ?>';
 		}
 
 		window.onunload = function () {
