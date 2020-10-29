@@ -46,7 +46,7 @@ if (isset($_POST["checkExistance"])) { // Called when student tries to enter gam
 	// we're definitely gonna have to throw in some addSessions here
 	$data = $QW_DAO->gameExists($_POST["game_id"]);
 	if ($data['live']){
-		if ($QW_DAO->playerCompletedGame($USER->email))
+		if ($QW_DAO->playerCompletedGame($USER->email, $_POST['game_id']))
 			header("Location: ".addSession("../student.php")."&game=err3"); // player has already completed game for this session
 		else{
 			if ($data['market_struct'] == 'perfect')
