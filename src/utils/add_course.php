@@ -16,13 +16,12 @@ $LAUNCH = LTIX::session_start();
 require_once('../../dao/QW_DAO.php');
 use \QW\DAO\QW_DAO;
 
-$p = $CFG->dbprefix . "econ_sim_";
-$QW_DAO = new QW_DAO($PDOX, $p);
+$QW_DAO = new QW_DAO($PDOX, $CFG->dbprefix, "econ_sim_");
 
 
 // Add new course
 if (isset($_POST['name']) && isset($_POST['section']) && isset($_POST['avatar'])) {
-	$QW_DAO->addCourse($USER->email, $_POST['name'], $_POST['section'],$_POST['avatar']);
+	$QW_DAO->addCourse( $_POST['name'], $_POST['section'], $USER->id, $_POST['avatar'] );
 }
 	// Delete existing course and its games
 else if (isset($_POST['delete_course_id'])){

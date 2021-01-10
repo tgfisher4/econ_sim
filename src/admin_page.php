@@ -18,8 +18,7 @@ Initially displays courses view. This view displays an instructors saved courses
 
 	$LAUNCH = LTIX::session_start();
 
-	$p = $CFG->dbprefix . "econ_sim_";
-	$QW_DAO = new QW_DAO($PDOX, $p);
+	$QW_DAO = new QW_DAO($PDOX, $CFG->dbprefix, "econ_sim_");
 
 	//include 'utils/sql_settup.php';
 
@@ -37,7 +36,7 @@ Initially displays courses view. This view displays an instructors saved courses
 	// if neither course nor game in query string, show courses view
 	// call func from sql_settup to get the instructor's saved courses
 	if (!isset($_GET['course']) && !isset($_GET['game']))
-		$courses = $QW_DAO->getCourses($USER->email);
+		$courses = $QW_DAO->getCourses($USER->id);
 
 	// if course in query string, show games view
 	// get current course name using course id in query and get course's games to list on screen
@@ -62,7 +61,9 @@ Initially displays courses view. This view displays an instructors saved courses
 
 	// different icons for the different types of available games
 	// (currently only econ games supported, but potential to add other types of courses. Maerketing and accounting show as examples)
-	$gameTypeIcons = ["econ"=>"fa-money-bill", "market"=>"fa-chart-line", "account"=>"fa-calculator"];
+	$gameTypeIcons = ["economics"=>"fa-money-bill", "marketing"=>"fa-chart-line", "accounting"=>"fa-calculator"];
+
+	$timestamp = time();
 ?><!doctype html>
 <html class="no-js" lang="en" dir="ltr">
   <head>
@@ -154,7 +155,7 @@ Initially displays courses view. This view displays an instructors saved courses
 						  	<a onclick="course_selected('<?= $course["course_id"] ?>')">
 						      	<div class="card" style="<?= htmlspecialchars($course_backgrounds[$course_num]) ?>">
 							        <div class="card-section">
-							        	<i class="fas <?= $course["avatar"]?$course["avatar"]:'fa-chart-bar' ?> fa-7x float-center game_options_content"></i>
+							        	<i class="fas <?= $course["avatar_name"]?$course["avatar_name"]:'fa-chart-bar' ?> fa-7x float-center game_options_content"></i>
 							        	<h4 class="game_options_content" style="font-weight: 300">
 							        		<?= $course["name"] ?>
 							        	</h4>
@@ -190,13 +191,13 @@ Initially displays courses view. This view displays an instructors saved courses
 						  	<a onclick="game_selected('<?= $game["game_id"] ?>')">
 						      	<div class="card" style="<?= htmlspecialchars($backgrounds[$game_num]) ?>">
 							        <div class="card-section">
-							        	<i class="fas <?= $gameTypeIcons[$game['type']] ?> fa-7x float-center game_options_content"></i>
+							        	<i class="fas <?= $gameTypeIcons[$game['game_type_name']] ?> fa-7x float-center game_options_content"></i>
 							        	<h4 class="game_options_content" style="font-weight: 300">
 							        		<?= $game["name"] ?>
 							        	</h4>
 							        	<h6 style="font-weight: 300; text-align: center;">
-							        		<?= $game['market_struct']=='monopoly'?'Monopoly':($game['market_struct']=='oligopoly'?'Oligopoly':($game['market_struct']=='perfect'?'Perfect Competition':'Monopolistic Competition')) ?>
-							        		<?= $game['difficulty']?' - '.$game['difficulty']:''?>
+							        		<?= $game['market_structure_name']=='monopoly'?'Monopoly':($game['market_structure_name']=='oligopoly'?'Oligopoly':($game['market_structure_name']=='perfect'?'Perfect Competition':'Monopolistic Competition')) ?>
+							        		<?= $game['difficulty_name']?' - '.$game['difficulty_name']:''?>
 										</h6>
 							        </div>
 							    </div>
@@ -268,7 +269,7 @@ Initially displays courses view. This view displays an instructors saved courses
 			</div>
 			<input id="avatarInput" type="hidden" name="avatar">
 			<div style="width: 220px; margin: 50px auto 0 auto">
-				<button class="button success" style="width: 220px; height: 80px; border-radius: 5px;"><h4 style="color: white"><i class="fas fa-save"></i> <strong>Save Course </strong></h4></button>
+				<button class="button success" style="width: 220px; height: 80px; border-radius: 5px;"><h4 style="color: white"><i class="fas fa-save"></i> <strong>Save Course</strong></h4></button>
 			</div>
 		</form>
 
@@ -291,8 +292,8 @@ Initially displays courses view. This view displays an instructors saved courses
 		</div>
 		<br>
 		<div id="gameTypeSection">
-			<div id="econ_type" class="grid-x grid-padding-x small-up-2 medium-up-3">
-				<div class="cell mode-cell" onclick="toGameConfig('econ')" style="cursor: pointer; background: linear-gradient(141deg, #0fb88a 20%, #0fb8ad 80%);">
+			<div id="econonimcs_type" class="grid-x grid-padding-x small-up-2 medium-up-3">
+				<div class="cell mode-cell" onclick="toGameConfig('economics')" style="cursor: pointer; background: linear-gradient(141deg, #0fb88a 20%, #0fb8ad 80%);">
 					<i class="fas fa-money-bill fa-2x mode_options_content" style="float: left; padding-left: 65px"></i>
 					<h4 class="mode_options_content" style="font-weight: 300">Economics</h4>
 				</div>
@@ -305,7 +306,7 @@ Initially displays courses view. This view displays an instructors saved courses
 					</span>
 				</div>
 			</div>
-			<div id="account_type" class="grid-x grid-padding-x small-up-2 medium-up-3" style="margin: 25px 0 25px 0">
+			<div id="accounting_type" class="grid-x grid-padding-x small-up-2 medium-up-3" style="margin: 25px 0 25px 0">
 				<div class="cell mode-cell" style="background: linear-gradient(141deg, #1fc8db 20%, #24b0e2 80%);">
 					<span data-tooltip data-position="right" data-alignment="bottom" tabindex="3" title="Coming Soon!">
 					<i class="fas fa-calculator fa-2x mode_options_content" style="float: left; padding-left: 65px"></i>
@@ -322,7 +323,7 @@ Initially displays courses view. This view displays an instructors saved courses
 			<div class="configContainer">
 				<h4 class="configHeader"><strong>Market Structure</strong></h4>
 				<div class="grid-x grid-margin-x" style="height: 140px">
-				  <div id="perfect" class="cell small-5 large-offset-1" style="cursor: pointer; background: <?= $gameInfo["market_struct"] == "perfect" ? "green" : "linear-gradient(141deg, #6dc2f4 20%, #4f7fcc 80%)" ?>; height: 120px; border-radius: 10px" onclick="structClicked('perfect')">
+				  <div id="perfect" class="cell small-5 large-offset-1" style="cursor: pointer; background: <?= $gameInfo["market_structure_name"] == "perfect" ? "green" : "linear-gradient(141deg, #6dc2f4 20%, #4f7fcc 80%)" ?>; height: 120px; border-radius: 10px" onclick="structClicked('perfect')">
 				  	<div class="verticalyCenter">
 					  	<i class="fas fa-globe fa-2x game_config_content" style="float: left; margin-left: 40px"></i>
 					  	<span data-tooltip tabindex="1" title="Students will act like a commodity producer along side 1000 other firms and have only a few choices in this simulation. They will see historic prices over the last 50 periods and will also see what the market output is in each period." data-click-open="false">
@@ -330,7 +331,7 @@ Initially displays courses view. This view displays an instructors saved courses
 					  	</span>
 					</div>
 				  </div>
-				  <div id="monopoly" class="cell small-5" style="cursor: pointer; background: <?= $gameInfo["market_struct"] == "monopoly" ? "green" : "linear-gradient(141deg, #6dc2f4 20%, #4f7fcc 80%)" ?>; height: 120px; border-radius: 10px" onclick="structClicked('monopoly')">
+				  <div id="monopoly" class="cell small-5" style="cursor: pointer; background: <?= $gameInfo["market_structure_name"] == "monopoly" ? "green" : "linear-gradient(141deg, #6dc2f4 20%, #4f7fcc 80%)" ?>; height: 120px; border-radius: 10px" onclick="structClicked('monopoly')">
 					<div class="verticalyCenter">
 					  	<i class="fas fa-crown fa-2x game_config_content" style="float: left; margin-left: 40px"></i>
 					  	<span data-tooltip tabindex="1" title="There is	only 1 firm in this market selling a unique product. There are no close substitutes. Entry into the market is completely blocked." data-click-open="false">
@@ -340,7 +341,7 @@ Initially displays courses view. This view displays an instructors saved courses
 				  </div>
 				</div>
 				<div class="grid-x grid-margin-x" style="height: 140px">
-				  <div id="oligopoly" class="cell small-5 large-offset-1" style="cursor: pointer; background: <?= $gameInfo["market_struct"] == "oligopoly" ? "green" : "linear-gradient(141deg, #6dc2f4 20%, #4f7fcc 80%)" ?>; height: 120px; border-radius: 10px" onclick="structClicked('oligopoly')">
+				  <div id="oligopoly" class="cell small-5 large-offset-1" style="cursor: pointer; background: <?= $gameInfo["market_structure_name"] == "oligopoly" ? "green" : "linear-gradient(141deg, #6dc2f4 20%, #4f7fcc 80%)" ?>; height: 120px; border-radius: 10px" onclick="structClicked('oligopoly')">
 					<div class="verticalyCenter">
 					  	<i class="fas fa-users fa-2x game_config_content" style="float: left; margin-left: 40px"></i>
 					  	<span data-tooltip tabindex="1" title="There are 2 firms selling differentiated products. Each firm has significant market power. Entry into the market is very difficult." data-click-open="false">
@@ -348,7 +349,7 @@ Initially displays courses view. This view displays an instructors saved courses
 					  	</span>
 					</div>
 				  </div>
-				  <div id="monopolistic" class="cell small-5" style="cursor: pointer; background: <?= $gameInfo["market_struct"] == "monopolistic" ? "green" : "linear-gradient(141deg, #6dc2f4 20%, #4f7fcc 80%)" ?>; height: 120px; border-radius: 10px" onclick="structClicked('monopolistic')">
+				  <div id="monopolistic" class="cell small-5" style="cursor: pointer; background: <?= $gameInfo["market_structure_name"] == "monopolistic" ? "green" : "linear-gradient(141deg, #6dc2f4 20%, #4f7fcc 80%)" ?>; height: 120px; border-radius: 10px" onclick="structClicked('monopolistic')">
 					<div class="verticalyCenter">
 					  	<i class="fas fa-balance-scale fa-2x game_config_content" style="float: left; margin-left: 40px"></i>
 					  	<span data-tooltip tabindex="1" title="Students will make choices on multiple variables. These choices will allow students to create differentiation in their product as they compete to gain market share and ultimately maximize profits." data-click-open="false">
@@ -363,9 +364,9 @@ Initially displays courses view. This view displays an instructors saved courses
 				<!-- hideForPerfect and hideForMonComp behave similarly -->
 				<!-- changeBack class will unhide elements when market selection is changed -->
 				<div class="configContainer hideForMonopOligop changeBack">
-					<h4 class="configHeader"><strong>Difficulty</strong></h4>
+					<h4 class="configHeader"><strong>difficulty_name</strong></h4>
 					<div class="grid-x grid-margin-x" style="height: 100px">
-					  <div id="principles" class="cell small-5 large-offset-2" style="cursor: pointer; background: <?= $gameInfo["difficulty"] == "principles" ? "green" : "linear-gradient(141deg, #1fc8db 20%, #6dc2f4 80%)" ?>; height: 75px; border-radius: 10px; margin: 0 auto auto;" onclick="diffClicked('principles')">
+					  <div id="principles" class="cell small-5 large-offset-2" style="cursor: pointer; background: <?= $gameInfo["difficulty_name"] == "principles" ? "green" : "linear-gradient(141deg, #1fc8db 20%, #6dc2f4 80%)" ?>; height: 75px; border-radius: 10px; margin: 0 auto auto;" onclick="diffClicked('principles')">
 					  	<div class="verticalyCenter">
 						  	<i class="fas fa-dice-one fa-2x game_config_content" style="float: left; margin-left: 40px"></i>
 						  	<span class="changeBack hideForMonComp" title="1 Variable: Output" data-tooltip tabindex="1" data-click-open="false">
@@ -378,7 +379,7 @@ Initially displays courses view. This view displays an instructors saved courses
 					  </div>
 					</div>
 					<div class="grid-x grid-margin-x hideForPerfect changeBack" style="height: 100px">
-					  <div id="intermediate" class="cell small-5" style="cursor: pointer; background: <?= $gameInfo["difficulty"] == "intermediate" ? "green" : "linear-gradient(141deg, #1fc8db 20%, #6dc2f4 80%)" ?>; height: 75px; border-radius: 10px; margin: 0 auto auto;" onclick="diffClicked('intermediate')">
+					  <div id="intermediate" class="cell small-5" style="cursor: pointer; background: <?= $gameInfo["difficulty_name"] == "intermediate" ? "green" : "linear-gradient(141deg, #1fc8db 20%, #6dc2f4 80%)" ?>; height: 75px; border-radius: 10px; margin: 0 auto auto;" onclick="diffClicked('intermediate')">
 					  	<div class="verticalyCenter">
 						  	<i class="fas fa-dice-two fa-2x game_config_content" style="float: left; margin-left: 40px"></i>
 						  	<span data-tooltip tabindex="1" title="5 Variables: Output, Prices, Marketing, Facility Development, & Product Development" data-click-open="false">
@@ -388,7 +389,7 @@ Initially displays courses view. This view displays an instructors saved courses
 					  </div>
 					</div>
 					<div class="grid-x grid-margin-x" style="height: 100px">
-					  <div id="advanced" class="cell small-5" style="cursor: pointer; background: <?= $gameInfo["difficulty"] == "advanced" ? "green" : "linear-gradient(141deg, #1fc8db 20%, #6dc2f4 80%)" ?>; height: 75px; border-radius: 10px; margin: 0 auto auto;" onclick="diffClicked('advanced')">
+					  <div id="advanced" class="cell small-5" style="cursor: pointer; background: <?= $gameInfo["difficulty_name"] == "advanced" ? "green" : "linear-gradient(141deg, #1fc8db 20%, #6dc2f4 80%)" ?>; height: 75px; border-radius: 10px; margin: 0 auto auto;" onclick="diffClicked('advanced')">
 					  	<div class="verticalyCenter">
 						  	<i class="fas fa-dice-three fa-2x game_config_content" style="float: left; margin-left: 40px"></i>
 						  	<span class="changeBack hideForMonComp" title="2 Variables: Output & Production Level" data-tooltip tabindex="1" data-click-open="false">
@@ -404,7 +405,7 @@ Initially displays courses view. This view displays an instructors saved courses
 				<div class="configContainer hideForMonComp hideForMonopOligop changeBack">
 					<h4 class="configHeader"><strong>Macroeconomy</strong></h4>
 					<div class="grid-x grid-margin-x" style="height: 140px">
-					  <div id="stable" class="cell small-5 large-offset-1" style="cursor: pointer; background: <?= $gameInfo["macro_econ"] == "stable" ? "green" : "linear-gradient(141deg, #4f7fcc 20%, #4f3aad 80%)" ?>; height: 120px; border-radius: 10px" onclick="macroClicked('stable')">
+					  <div id="stable" class="cell small-5 large-offset-1" style="cursor: pointer; background: <?= $gameInfo["macro_economy_name"] == "stable" ? "green" : "linear-gradient(141deg, #4f7fcc 20%, #4f3aad 80%)" ?>; height: 120px; border-radius: 10px" onclick="macroClicked('stable')">
 					  	<div class="verticalyCenter">
 						  	<i class="fas fa-stream fa-2x game_config_content" style="float: left; margin-left: 40px"></i>
 						  	<span data-tooltip tabindex="1" title="No change in GDP and CPI." data-click-open="false">
@@ -412,11 +413,32 @@ Initially displays courses view. This view displays an instructors saved courses
 						  	</span>
 						</div>
 					  </div>
-					  <div id="growth" class="cell small-5" style="cursor: pointer; background: <?= $gameInfo["macro_econ"] == "growth" ? "green" : "linear-gradient(141deg, #4f7fcc 20%, #4f3aad 80%)" ?>; height: 120px; border-radius: 10px" onclick="macroClicked('growth')">
+					  <div id="growth" class="cell small-5" style="cursor: pointer; background: <?= $gameInfo["macro_economy_name"] == "growth" ? "green" : "linear-gradient(141deg, #4f7fcc 20%, #4f3aad 80%)" ?>; height: 120px; border-radius: 10px" onclick="macroClicked('growth')">
 					  	<div class="verticalyCenter">
 						  	<i class="fas fa-chart-line fa-2x game_config_content" style="float: left; margin-left: 40px"></i>
 						  	<span data-tooltip tabindex="1" title="High inflation." data-click-open="false">
 						  		<h4 class="game_config_content" style="font-weight: 300">Growth</h4>
+						  	</span>
+						</div>
+					  </div>
+					</div>
+				</div>
+				<div class="configContainer">
+					<h4 class="configHeader"><strong>Allow Replays?</strong></h4>
+					<div class="grid-x grid-margin-x" style="height: 140px">
+					  <div id="allowReplay" class="cell small-5 large-offset-1" style="cursor: pointer; background: <?= $gameInfo["is_replayable"] ? "green" : "linear-gradient(141deg, #4f7fcc 20%, #4f3aad 80%)" ?>; height: 120px; border-radius: 10px" onclick="replayabilityClicked(true)">
+					  	<div class="verticalyCenter">
+						  	<i class="fas fa-stream fa-2x game_config_content" style="float: left; margin-left: 40px"></i>
+						  	<span data-tooltip tabindex="1" title="Students may replay this game an unlimited number of times." data-click-open="false">
+						  		<h4 class="game_config_content" style="font-weight: 300">Yes</h4>
+						  	</span>
+						</div>
+					  </div>
+					  <div id="preventReplay" class="cell small-5" style="cursor: pointer; background: <?= !$gameInfo["is_replayable"] ? "green" : "linear-gradient(141deg, #4f7fcc 20%, #4f3aad 80%)" ?>; height: 120px; border-radius: 10px" onclick="replayabilityClicked(false)">
+					  	<div class="verticalyCenter">
+						  	<i class="fas fa-chart-line fa-2x game_config_content" style="float: left; margin-left: 40px"></i>
+						  	<span data-tooltip tabindex="1" title="Students may only play this game once." data-click-open="false">
+						  		<h4 class="game_config_content" style="font-weight: 300">No</h4>
 						  	</span>
 						</div>
 					  </div>
@@ -464,12 +486,12 @@ Initially displays courses view. This view displays an instructors saved courses
 				    		<hr>
 				    		<div style="height: 30px">
 								<h6 style="float: left; font-weight: 485">Constant Cost: </h6>
-								<p id="sliderOutput4" style="float: left; margin-left: 5px"><?= $gameInfo ? $gameInfo['const_cost'] : '40' ?></p>
+								<p id="sliderOutput4" style="float: left; margin-left: 5px"><?= $gameInfo ? $gameInfo['unit_cost'] : '40' ?></p>
 					    		<div style="float: right; width: 190px">
-									<div id="s4" class="slider" data-slider data-initial-start="<?= $gameInfo ? $gameInfo['const_cost'] : '40' ?>" data-end="100" data-start="10">
+									<div id="s4" class="slider" data-slider data-initial-start="<?= $gameInfo ? $gameInfo['unit_cost'] : '40' ?>" data-end="100" data-start="10">
 									  <span class="slider-handle" data-slider-handle role="slider" tabindex="1"></span>
 									  <span class="slider-fill" data-slider-fill></span>
-									  <input type="hidden" value="<?= $gameInfo ? $gameInfo['const_cost'] : '40' ?>">
+									  <input type="hidden" value="<?= $gameInfo ? $gameInfo['unit_cost'] : '40' ?>">
 									</div>
 								</div>
 				    		</div>
@@ -507,20 +529,22 @@ Initially displays courses view. This view displays an instructors saved courses
 				</div>
 				<!-- hidden inputs for new game modal - above button groups correspond to an input for saving to mysql entry for game -->
 				<form id="newGameForm" method="post" action="utils/game_util.php">
+					<input type="hidden" name="action" value="updateGame">
 					<input type="hidden" name="gameName" id="gameName">
-					<input type="hidden" name="type" id="type" value="<?= $gameInfo ? $gameInfo['type'] : ''?>">
-					<input type="hidden" name="mode" id="mode" value="<?= $gameInfo ? $gameInfo['mode'] : ''?>">
-					<input type="hidden" name="difficulty" id="diff" value="<?= $gameInfo ? $gameInfo['difficulty'] : ''?>">
-					<input type="hidden" name="market_struct" id="marStr" value="<?= $gameInfo ? $gameInfo['market_struct'] : ''?>">
-					<input type="hidden" name="macroEconomy" id="macrEcon" value="<?= $gameInfo ? $gameInfo['macro_econ'] : ''?>">
-					<input type="hidden" name="limit" id="limit">
+					<input type="hidden" name="gameTypeName" id="type" value="<?= $gameInfo ? $gameInfo['game_type_name'] : ''?>">
+					<!--input type="hidden" name="mode" id="mode" value="<?= $gameInfo ? $gameInfo['mode'] : ''?>"-->
+					<input type="hidden" name="difficultyName" id="diff" value="<?= $gameInfo ? $gameInfo['difficulty_name'] : ''?>">
+					<input type="hidden" name="marketStructureName" id="marStr" value="<?= $gameInfo ? $gameInfo['market_structure_name'] : ''?>">
+					<input type="hidden" name="macroEconomyName" id="macrEcon" value="<?= $gameInfo ? $gameInfo['macro_economy_name'] : ''?>">
+					<input type="hidden" name="isReplayable" id="isReplayable" value="<?= $gameInfo ? $gameInfo['is_replayable'] : ''?>">
+					<input type="hidden" name="timeLimit" id="limit">
 					<input type="hidden" name="numRounds" id="numRnd">
-					<input type="hidden" name="demand_intercept" id="dIntr">
-					<input type="hidden" name="demand_slope" id="dSlope">
-					<input type="hidden" name="fixed_cost" id="fCost">
-					<input type="hidden" name="const_cost" id="cCost">
-					<input type="hidden" name="course_id" value="<?= isset($_GET['course']) ? $_GET['course'] : $gameInfo['course_id'] ?>">
-					<input type="hidden" name="game_id" value="<?= isset($_GET['game']) ? $_GET['game'] : NULL ?>">
+					<input type="hidden" name="demandIntercept" id="dIntr">
+					<input type="hidden" name="demandSlope" id="dSlope">
+					<input type="hidden" name="fixedCost" id="fCost">
+					<input type="hidden" name="unitCost" id="cCost">
+					<input type="hidden" name="courseId" value="<?= isset($_GET['course']) ? $_GET['course'] : $gameInfo['course_id'] ?>">
+					<input type="hidden" name="gameId" value="<?= isset($_GET['game']) ? $_GET['game'] : NULL ?>">
 					<div style="width: 250px; margin: 0 auto 0 auto">
 						<button type="button" class="button success" style="width: 250px; height: 100px; border-radius: 5px;" onclick="createGame()"><h4 style="color: white"><i class="fas fa-save"></i> <strong>Save Game </strong></h4></button>
 					</div>
@@ -542,8 +566,25 @@ Initially displays courses view. This view displays an instructors saved courses
     <script src="https://code.jquery.com/jquery-3.4.1.min.js" integrity="sha256-CSXorXvZcTkaix6Yvo6HppcZGetbYMGWSFlBw8HfCJo=" crossorigin="anonymous"></script>
     <script src="https://cdnjs.cloudflare.com/ajax/libs/what-input/5.2.6/what-input.min.js" integrity="sha256-yJJHNtgDvBsIwTM+t18nNnp9rEXdyZ1knji5sqm4mNw=" crossorigin="anonymous"></script>
     <script src="https://cdnjs.cloudflare.com/ajax/libs/foundation/6.6.1/js/foundation.min.js" integrity="sha256-tdB5sxJ03S1jbwztV7NCvgqvMlVEvtcoJlgf62X49iM=" crossorigin="anonymous"></script>
-    <script src="../js/app.js"></script>
+    <script src="../js/app.js?t=<?=$timestamp?>"></script>
+	<script src="../js/utils/gen_utils.js?t=<?=$timestamp?>"></script>
     <script type="text/javascript">
+		/*
+			$courses: <?= var_dump($courses); ?>
+			$USER->id: <?= var_dump($USER->id); ?>
+		*/
+
+		const gameOptionsUnderscores = <?=
+					$gameInfo
+					?
+					'{' .
+						join(",\n\t\t\t\t\t\t\t  ", array_map(function ($key, $value) { return $key . ":" . '"'.$value.'"'; }, array_keys($gameInfo), array_values($gameInfo)))
+					. '}'
+					: 'null'; ?>;
+
+		const gameOptions = gameOptionsUnderscores
+							? objMapKeys(snakeToCamel, gameOptionsUnderscores)
+							: null;
 
     	// back button in new game modal
     	function backToGameType() {
@@ -612,13 +653,14 @@ Initially displays courses view. This view displays an instructors saved courses
     	}
 
     	function toggleGameLive(id, gameName, mode) { // makes call to change session live status
-    		var priceHistory = []; var shockYear=0;
-    		if ('<?= isset($gameInfo["market_struct"]) && $gameInfo["market_struct"] == "perfect"?>') {
+    		var initPriceHistory = [];
+			var shockYear=0;
+    		if( gameOptions['marketStructureName'] == 'perfect' /*'<?= isset($gameInfo["market_structure_name"]) && $gameInfo["market_structure_name"] == "perfect"?>'*/ ){
     			// if toggling a perfect comp game, generate the 25 yr price history
     			priceHistory = [50];
     			for (var i=1;i<25;i++) {
-					console.log(i + ": " + priceHistory);
-		    		var prevPrice = priceHistory[i-1];
+					console.log(i + ": " + initPriceHistory);
+		    		var prevPrice = initPriceHistory[i-1];
 
 		    		// if 5th year or 5 years since sock, allow random shock occurance (1 in 5 probability of occuring)
 		    		if (i >= 5 && i-shockYear >= 5 && getRandomArbitrary()==3) {
@@ -628,15 +670,15 @@ Initially displays courses view. This view displays an instructors saved courses
 		    		else
 		    			price = 0.5+0.999*prevPrice+random(1,2);
 
-		    		priceHistory.push(price.toFixed(2));
+		    		initPriceHistory.push(price.toFixed(2));
 		    	}
     		}
-			console.log("end: " + priceHistory);
-			console.log(priceHistory.join());
+			console.log("end: " + initPriceHistory);
+			console.log(initPriceHistory.join());
 		    $.ajax({
 		    	url: "<?= addSession("utils/session.php") ?>",
 		    	method: "POST",
-		    	data: {action: "toggle", id: id, priceHist: priceHistory.join()},
+		    	data: {action: "toggle", gameId: gameOptions['gameId'], initPriceHistory: initPriceHistory.join()},
 		    	success: function(toggledOn) {
 		    		// update screen accordingly based on whether going online or offline
 					// returning whether the session was toggled on lets us avoid another DB call
@@ -665,7 +707,7 @@ Initially displays courses view. This view displays an instructors saved courses
 
     	// click handler for game results/edit game button
 	    $(document).on('click', '#dynamicButtonFunc', function() {
-	    	if (<?= $isGameLive ? "true" : "false"?>)
+	    	if ($('#dynamicButtonText').text() == "Game Results")
 	    		redirectResultsPage();
 	    	else
 	    		editGame();
@@ -719,16 +761,18 @@ Initially displays courses view. This view displays an instructors saved courses
     		document.getElementById('marStr').value = id;
 
     		// set single or multi player player
+			/*
     		if (id=='oligopoly')
     			document.getElementById('mode').value = 'multi';
     		else
     			document.getElementById('mode').value = 'single';
+			*/
 
     		// show dynamic config options based on market struct selection
     		dynamicConfigFunc(id);
     	}
 
-    	//changes colors and sets input to match selection for difficulty and macro economy options
+    	//changes colors and sets input to match selection for difficulty_name and macro economy options
     	function diffClicked(id) {
     		var options = ['principles', 'intermediate', 'advanced'];
     		document.getElementById(options[0]).style.background = "linear-gradient(141deg, #1fc8db 20%, #6dc2f4 80%)";
@@ -744,6 +788,12 @@ Initially displays courses view. This view displays an instructors saved courses
     		document.getElementById(id).style.background = "green";
     		document.getElementById('macrEcon').value = id;
     	}
+		function replayabilityClicked(yesWasClicked){
+			document.getElementById('allowReplay').style.background = "linear-gradient(141deg, #4f7fcc 20%, #4f3aad 80%)";
+    		document.getElementById('preventReplay').style.background = "linear-gradient(141deg, #4f7fcc 20%, #4f3aad 80%)";
+    		document.getElementById(yesWasClicked ? 'allowReplay' : 'preventReplay').style.background = "green";
+			document.getElementById('isReplayable').value = yesWasClicked ? 1 : 0;
+		}
 
     	// when user clicks to create game / save update
     	function createGame() {
@@ -766,7 +816,7 @@ Initially displays courses view. This view displays an instructors saved courses
     		$('#gameTypeSubtitle').css('display', 'none');
 			$('#gameConfigSubtitle').css('display','');
 
-			dynamicConfigFunc('<?= isset($gameInfo["market_struct"]) && $gameInfo["market_struct"] ?>');
+			dynamicConfigFunc(gameOptions['marketStructureName']/*'<?= isset($gameInfo["market_structure_name"]) && $gameInfo["market_structure_name"] ?>'*/);
     	}
     	// ----------------
 
@@ -786,7 +836,7 @@ Initially displays courses view. This view displays an instructors saved courses
     	function redirectResultsPage() {
     		//urlPrefix = window.location.href.substr(0, window.location.href.indexOf('src'));
     		//window.location=urlPrefix+'src/results.php?game='+$('#id').val();
-			window.location = "<?= addSession("results.php"); ?>" + "<?= $gameInfo ? "&game=".$gameInfo['game_id'] : ""?>" ;
+			window.location = "<?= addSession("results.php"); ?>" + "&game=" + gameOptions['gameId']/*"<?= $gameInfo ? "&game=".$gameInfo['gameId'] : ""?>"*/ ;
     	}
 
     	// handles displaying the relevant options for the selected market structure in the new game/edit game modal
