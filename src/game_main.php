@@ -20,8 +20,7 @@ use \QW\DAO\QW_DAO;
 
 $LAUNCH = LTIX::session_start();
 
-$p = $CFG->dbprefix . "econ_sim_";
-$QW_DAO = new QW_DAO($PDOX, $p);
+$QW_DAO = new QW_DAO($PDOX, $CFG->dbprefix, "econ_sim_");
 
 // Render view
 $OUTPUT->header();
@@ -31,7 +30,10 @@ $gameInfo = $QW_DAO->getGameInfo($_GET['game']);
 $startGame = true;
 
 // if multi mode (oligopoly) do not immediately start game - must wait to be matched with another player
-if ($gameInfo['mode'] == 'multi') $startGame = false;
+if ($gameInfo['market_structure_name'] == 'oligopoly') $startGame = false;
+
+$isMultiplayer = $gameInfo['market_structure_name'] == 'oligopoly';
+$timestamp = time();
 
 ?>
 
@@ -48,10 +50,25 @@ if ($gameInfo['mode'] == 'multi') $startGame = false;
    	<link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/animate.css/3.5.2/animate.css" />
    	<link rel="stylesheet" href="//cdn.jsdelivr.net/npm/alertifyjs@1.11.1/build/css/alertify.min.css"/>
     <link rel="stylesheet" href="//cdn.jsdelivr.net/npm/alertifyjs@1.11.1/build/css/themes/default.min.css"/>
-
+    <!-- absolute dependencies as seen in perfect_game -->
+    <script src="../js/node_modules/chart.js/dist/Chart.js"></script>
+    <script src="../node_modules/chartjs-plugin-annotation/chartjs-plugin-annotation.js"></script>
+    <script src="//cdn.jsdelivr.net/npm/alertifyjs@1.11.1/build/alertify.min.js"></script>
+    <script src="https://code.jquery.com/jquery-3.4.1.min.js" integrity="sha256-CSXorXvZcTkaix6Yvo6HppcZGetbYMGWSFlBw8HfCJo=" crossorigin="anonymous"></script>
+    <script src="https://cdnjs.cloudflare.com/ajax/libs/foundation/6.6.1/js/foundation.min.js" integrity="sha256-tdB5sxJ03S1jbwztV7NCvgqvMlVEvtcoJlgf62X49iM=" crossorigin="anonymous"></script>
+    <script src="https://cdnjs.cloudflare.com/ajax/libs/what-input/5.2.6/what-input.min.js" integrity="sha256-yJJHNtgDvBsIwTM+t18nNnp9rEXdyZ1knji5sqm4mNw=" crossorigin="anonymous"></script>
+	<script src="../js/utils/gen_utils.js?t=<?=$timestamp?>"></script>
+	<script src="../js/utils/econ_utils.js?t=<?=$timestamp?>"></script>
     <!--This func wouldn't work in safari unless it was up here -->
-    <script type="text/javascript">
-    	var firstSubmit = false;
+    <!--Working fine in Safari for me, but I'll keep it here, commented, just in case -->
+    <!--script type="text/javascript">
+        //
+        const gameOptionsUnderscores = { <?=
+        			join(",\n\t\t\t\t\t\t\t  ", array_map(function ($key, $value) { return $key . ":" . '"'.$value.'"'; }, array_keys($gameInfo), array_values($gameInfo)));
+        			?>};
+        const gameOptions = objMapKeys(snakeToCamel, gameOptionsUnderscores);
+        const maximumQuantity = calculateMaxQuantity(gameOptions);
+        let year = 1;
 
     	// Func for off canvas menu to change screen content
     	function change_content(to_section) {
@@ -60,10 +77,10 @@ if ($gameInfo['mode'] == 'multi') $startGame = false;
     			return;
     		}
 
-    		var headers = {"dashboard_section": "Dashboard", "income_section": "Income Statement", "cost_section": "Cost Data"};
-    		var elements = document.getElementsByClassName("display_sections");
+    		const headers = {"dashboard_section": "Dashboard", "income_section": "Income Statement", "cost_section": "Cost Data"};
+    		const elements = document.getElementsByClassName("display_sections");
 
-    		if (firstSubmit) { // make sure a submit has occured before being able to switch to info sections
+    		if ( year > 1 ) { // make sure a submit has occured before being able to switch to info sections
 	    		document.body.scrollTop = document.documentElement.scrollTop = 0; // force page to top
 
 	    		for (var i = elements.length - 1; i >= 0; i--) {
@@ -73,15 +90,15 @@ if ($gameInfo['mode'] == 'multi') $startGame = false;
 	    		document.getElementById(to_section).style.display = "";
 	    		$('#dynamicHeader').text(headers[to_section]);
 
-	    		init(to_section);
+	    		drawGraph(to_section);
 	    	}
 	    	else { // if no submit yet, show message
 		  		alertify.set('notifier','delay', 3);
 				alertify.set('notifier','position', 'top-right');
-				alertify.warning('<p style="text-align: center; margin: 0;"><i class="fas fa-exclamation-triangle"></i><br>Please  enter valid quantity!<br>(1-<?=$gameInfo['max_quantity']?> units)</p>');
+				alertify.warning(`<p style="text-align: center; margin: 0;"><i class="fas fa-exclamation-triangle"></i><br>Please enter valid quantity!<br>(1- ${maximumQuantity} units)</p>`);
 	    	}
     	}
-    </script>
+    </script-->
   </head>
   <body style="background-color: #d3f6ff;">
 
@@ -126,8 +143,8 @@ if ($gameInfo['mode'] == 'multi') $startGame = false;
 			</div>
 		    <span class="title-bar-title">
 		    	<h3 style="margin: 30px 0 0 30px; font-weight: 500"><?= $gameInfo['name'] ?></h3>
-		    	<h6 style="margin-left: 30px; display: none;">
-		    		Opponent: <span class="competition"></span>
+		    	<h6 id="oppNameDisplay" style="margin-left: 30px;">
+		    		Opponent: <span class="oppName"></span>
 		    	</h6>
 		    </span>
 		  </div>
@@ -146,20 +163,20 @@ if ($gameInfo['mode'] == 'multi') $startGame = false;
 			<h3 id="dynamicHeader" style="padding-top: 25px; padding-left: 25px; margin-bottom: 0; font-weight: 350; font-weight: 600;">Dashboard</h3>
 			<div style="width: 100%; height: 60px; position: absolute; bottom: 0">
 				<div class="grid-x" style="margin-left: 25px">
-					<div class="cell large-1 "><p id="year"><b>Year:</b> 1</p></div>
+					<div class="cell large-1 "><p id="year"><b>Year: </b><span class="currentYearSpan">1</span></p></div>
 					<div class="cell large-4">
 						<p style="float: left; padding-right: 10px"><b>Timer: </b></p>
-						<div id="progressContainer" class="success progress" aria-valuemax="100">
-						  <span id="progressBar" class="progress-meter" style="width: 100%">
-						  	<p id="timer" class="progress-meter-text" data-legnth="<?= $gameInfo['time_limit'] ?>"><?= $gameInfo['time_limit'] ?>:00</p>
+						<div id="progressContainer" class="success progress" aria-valuemax="100" style="margin-top: 7px;">
+						  <span id="progressBar" class="progress-meter" style="width: 100%;">
+						  	<p id="timer" class="progress-meter-text" data-length="<?= $gameInfo['time_limit'] ?>"><?= $gameInfo['time_limit'] ?>:00</p>
 						  </span>
 						</div>
 					</div>
 					<div class="cell large-6">
 						<p style="float: left; padding-right: 20px"><b>Quantity: </b></p>
-						<input type="number" id="quantity" style="width: 125px; float: left;" min="1" max="500" placeholder="1 - <?=$gameInfo['max_quantity']?> Units">
-						<button class="button" type="button" id="price_submit_btn" style="margin-left: 20px; font-weight: 500; float: left;">Submit</i></button>
-						<span id="waitOppSub" style="display: none; text-decoration: none; border: none; outline: none;" data-tooltip tabindex="1" title="Waiting for opponent to submit quantity">
+						<input type="number" id="quantityInput" style="width: 125px; float: left;" min="1" max="500" placeholder="1 - X Units">
+						<button class="button" type="button" id="submitQuantityButton" onclick="submitQuantityButtonCallback($('#quantityInput').val())" style="margin-left: 20px; font-weight: 500; float: left;">Submit</i></button>
+						<span id="waitOppSub" style="display: inherit; text-decoration: none; border: none; outline: none;" data-tooltip tabindex="1" title="Waiting for opponent to submit quantity">
 							<i class="fas fa-spinner fa-pulse fa-2x"></i>
 						</span>
 					</div>
@@ -169,9 +186,9 @@ if ($gameInfo['mode'] == 'multi') $startGame = false;
 		<!--  End toolbar -->
 
 		<input type="hidden" id="game_id" value="<?=$_GET['game']?>">
+		<input type="hidden" id="session_id" value="<?=$_GET['session_id']?>">
 		<input type="hidden" id="usrname" value="<?=$USER->email?>">
 		<input type="hidden" id="opponent" value="">
-		<input type="hidden" id="mode" value="<?=$gameInfo['mode']?>">
 
 		<div id="mainContent">
 
@@ -185,11 +202,12 @@ if ($gameInfo['mode'] == 'multi') $startGame = false;
 
 			<!-- Dashboard -->
 			<div class="display_sections" id="dashboard_section">
-				<div class="section_content" id="summarySection" style="display: none;">
+				<!--div class="section_content" id="summarySection" style="display: none;"-->
+				<div class="section_content" id="summarySection">
 					<div class="section_cell" style="float: left;">
-						<h4 id="summaryYear" style="text-align: center; font-weight: 450">Summary for Year </h4>
+						<h4 id="summaryHeader" style="text-align: center; font-weight: 450">Summary for Year <span class="previousYearSpan">1</span></h4>
 						<hr style="margin-bottom: 30px">
-						<table class="paleBlueRows">
+						<table id="summaryTable" class="paleBlueRows">
 							<tbody>
 								<tr>
 									<td>Market Price</td>
@@ -197,15 +215,15 @@ if ($gameInfo['mode'] == 'multi') $startGame = false;
 								</tr>
 								<tr>
 									<td>Production Output</td>
-									<td><span id="prodQuantity"></span></td>
+									<td><span id="quantityDisplay"></span></td>
 								</tr>
 								<tr>
-									<td>Marginal Cost</td>
-									<td>$<span id="unitCost"></span></td>
+									<td>Average Cost</td>
+									<td><span id="avgCost"></span></td>
 								</tr>
 								<tr>
 									<td>Total Cost</td>
-									<td>$<span id="ttlCost"></span></p></td>
+									<td><span id="totalCost"></span></p></td>
 								</tr>
 								<tr>
 									<td>Revenue</td>
@@ -217,7 +235,7 @@ if ($gameInfo['mode'] == 'multi') $startGame = false;
 								</tr>
 								<tr>
 									<td><b>Cumulative Earnings</b></td>
-									<td><b><span id="cumulative"></span></b></td>
+									<td><b><span id="cumulativeProfit"></span></b></td>
 								</tr>
 							</tbody>
 						</table>
@@ -238,29 +256,29 @@ if ($gameInfo['mode'] == 'multi') $startGame = false;
 				<div class="section_content">
 					<div style="min-height: 550px">
 						<div class="section_cell" style="width: 700px; margin: 0 auto 50px auto;">
-							<h4 style="text-align: center; font-weight: 450">Year <span class="yearSpan">1</span> Overview</h4>
+							<h4 style="text-align: center; font-weight: 450">Year <span class="previousYearSpan">1</span> Overview</h4>
 							<hr style="margin-bottom: 20px">
 							<table class="paleBlueRows">
 								<tbody>
-									<?=$gameInfo['mode'] == 'multi'?'<tr><td> </td><td><b>You</b></td><td><em>Opponent</em></td></tr>':''?>
+									<?= $isMultiplayer ? '<tr><td> </td><td><b>You</b></td><td><b><span class="oppName"></span></b> (opponent)</td></tr>':''?>
+									<tr>
+										<td>Price</td>
+										<td <?= $isMultiplayer ? 'colspan="2"' : ''?>id="liPrice"></td>
+									</tr>
 									<tr>
 										<td>Revenue</td>
 										<td id="liRevenue"></td>
-										<?=$gameInfo['mode'] == 'multi'?'<td id="liRevenueOpp"></td>':''?>
+										<?= $isMultiplayer ? '<td id="liRevenueOpp"></td>' : ''?>
 									</tr>
 									<tr>
 										<td>Net Profit</td>
 										<td id="liNet"></td>
-										<?=$gameInfo['mode'] == 'multi'?'<td id="liNetOpp"></td>':''?>
+										<?= $isMultiplayer ? '<td id="liProfitOpp"></td>' : ''?>
 									</tr>
 									<tr>
 										<td>Return on Sales</td>
 										<td id="liReturn"></td>
-										<?=$gameInfo['mode'] == 'multi'?'<td id="liReturnOpp"></td>':''?>
-									</tr>
-									<tr>
-										<td>Price</td>
-										<td id="liPrice"></td>
+										<?= $isMultiplayer ? '<td id="liReturnOpp"></td>' : ''?>
 									</tr>
 								</tbody>
 							</table>
@@ -280,10 +298,10 @@ if ($gameInfo['mode'] == 'multi') $startGame = false;
 						</div>
 					</div>
 					<div id="animate2" class="section_cell cell_graph" style="float: right;">
-						<h4 style="text-align: center; font-weight: 450">Cummulative Earnings</h4>
+						<h4 style="text-align: center; font-weight: 450">Cumulative Earnings</h4>
 						<hr style="margin-bottom: 0.65rem">
 						<div class="graph">
-							<canvas id="cummulativeChart"></canvas>
+							<canvas id="cumulativeChart"></canvas>
 						</div>
 					</div>
 					<div id="animate3" class="section_cell cell_graph" style="float: left; margin-top: 50px">
@@ -309,7 +327,7 @@ if ($gameInfo['mode'] == 'multi') $startGame = false;
 				<div class="section_content">
 					<div style="min-height: 550px">
 						<div class="section_cell" style="width: 700px; margin: 0 auto 50px auto;">
-							<h4 style="text-align: center; font-weight: 450">Year <span class="yearSpan">1</span> Overview</h4>
+							<h4 style="text-align: center; font-weight: 450">Year <span class="previousYearSpan">1</span> Overview</h4>
 							<hr style="margin-bottom: 20px">
 							<table class="paleBlueRows">
 								<tbody>
@@ -322,12 +340,12 @@ if ($gameInfo['mode'] == 'multi') $startGame = false;
 										<td id="liPrice2"></td>
 									</tr>
 									<tr>
-										<td>Marginal Cost</td>
-										<td id="liMarginal"></td>
+										<td>Average Cost</td>
+										<td id="liAvgCost"></td>
 									</tr>
 									<tr>
 										<td>Production Cost</td>
-										<td id="liProduction"></td>
+										<td id="liTotalCost"></td>
 									</tr>
 								</tbody>
 							</table>
@@ -354,7 +372,7 @@ if ($gameInfo['mode'] == 'multi') $startGame = false;
 						</div>
 					</div>
 					<div id="animate3b" class="section_cell cell_graph" style="float: left; margin-top: 50px">
-						<h4 style="text-align: center; font-weight: 450">Average Total</h4>
+						<h4 style="text-align: center; font-weight: 450">Average Cost</h4>
 						<hr style="margin-bottom: 0.65rem">
 						<div class="graph">
 							<canvas id="avgTotalChart"></canvas>
@@ -377,15 +395,33 @@ if ($gameInfo['mode'] == 'multi') $startGame = false;
 	<!-- begining of game instructions -->
 	<div class="reveal" id="beginModal" data-reveal data-animation-in="slide-in-up" style="border-radius: 5px; opacity: 0.9">
 		<h2 style="text-align: left;"><strong>Instructions</strong></h2>
-		<?php if ($gameInfo['market_struct']=='oligopoly') { ?>
-			<p>In this simulation you will be the owner of a non-durable commodity, selling your product in a oligopolistic market environment. Your goal is to determine output levels in this strategically interactive environment in order to profit maximize.</p>
-			<p>For each of <?= $gameInfo['num_rounds'] ?> periods you will observe previous prices and choose a quantity to sell in the next period.  Since you are one of two firms selling in this market, your choice, along with your competitor’s choice will determine your profits each round.</p>
-			<p>At the end of the simulation, cumulative profits will be measured and grading against a hypothetical firm acting optimally.</p>
-		<?php } else { ?>
+		<?php if ($gameInfo['market_structure_name'] == 'oligopoly') { ?>
+			<p>In this simulation you will be the owner of a non-durable commodity, selling your product in a oligopolistic market environment. Your goal is to determine output levels in this strategically interactive environment in order to maximize profit.</p>
+			<p>For each of <?= $gameInfo['num_rounds'] ?> periods you will observe previous prices and choose a quantity to sell in the next period. Since you are one of two firms selling in this market, your choice, along with your competitor’s choice will determine your profits each round.</p>
+			<p>At the end of the simulation, cumulative profits will be measured and graded against a hypothetical firm acting optimally.</p>
+		<?php } else if ($gameInfo['market_structure_name'] == 'monopoly'){ ?>
 			<p>In this simulation you will be the owner of a non-durable commodity, selling your product in a monopolistic market environment. Your goal is to determine output levels in order to profit maximize.</p>
 			<p>Each period you will observe previous prices and choose a quantity to sell in the next period.  Since you are the only firm selling in this market, there is no industry market research to consult.</p>
 			<p>At the end of the simulation, cumulative profits will be measured and grading against a hypothetical firm acting optimally.</p>
-		<?php } ?>
+		<?php }
+            else {?> <p>Something went wrong! Market structure <?= $gameInfo['market_structure_name'] ?></p> <?php } ?>
+		<button class="close-button" data-close aria-label="Close reveal" onclick="closeStartScreen()" type="button">
+			<span aria-hidden="true">&times;</span>
+		</button>
+	</div>
+    <div class="reveal" id="instructionsModal" data-reveal data-animation-in="slide-in-up" style="border-radius: 5px; opacity: 0.9">
+		<h2 style="text-align: left;"><strong>Instructions</strong></h2>
+		<?php if ($gameInfo['market_structure_name'] == 'oligopoly') { ?>
+			<p>In this simulation you will be the owner of a non-durable commodity, selling your product in a oligopolistic market environment. Your goal is to determine output levels in this strategically interactive environment in order to maximize profit.</p>
+			<p>For each of <?= $gameInfo['num_rounds'] ?> periods you will observe previous prices and choose a quantity to sell in the next period. Since you are one of two firms selling in this market, your choice, along with your competitor’s choice will determine your profits each round.</p>
+			<p>At the end of the simulation, cumulative profits will be measured and graded against a hypothetical firm acting optimally.</p>
+		<?php } else if ($gameInfo['market_structure_name'] == 'monopoly'){ ?>
+			<p>In this simulation you will be the owner of a non-durable commodity, selling your product in a monopolistic market environment. Your goal is to determine output levels in order to profit maximize.</p>
+			<p>Each period you will observe previous prices and choose a quantity to sell in the next period.  Since you are the only firm selling in this market, there is no industry market research to consult.</p>
+			<p>At the end of the simulation, cumulative profits will be measured and grading against a hypothetical firm acting optimally.</p>
+		<?php }
+            else {?> <p>Something went wrong! Market structure <?= $gameInfo['market_structure_name'] ?></p> <?php } ?>
+		<!--button class="close-button" data-close aria-label="Close reveal" onclick="closeModal('instructionsModal')" type="button"-->
 		<button class="close-button" data-close aria-label="Close reveal" type="button">
 			<span aria-hidden="true">&times;</span>
 		</button>
@@ -394,6 +430,16 @@ if ($gameInfo['mode'] == 'multi') $startGame = false;
 	<div class="reveal" id="endModal" data-reveal data-animation-in="slide-in-up" style="border-radius: 5px; opacity: 0.9">
 		<h2 style="text-align: center;"><strong>Game Over!</strong></h2>
 		<p style="text-align: center;">(Dismiss to view final results)</p>
+		<!-- <button class="close-button" data-close aria-label="Close reveal" type="button" onclick="closeModal('endModal')"> -->
+		<button class="close-button" data-close aria-label="Close reveal" type="button">
+			<span aria-hidden="true">&times;</span>
+		</button>
+	</div>
+    <!-- non-replayable -->
+    <div class="reveal" id="alreadyPlayedModal" data-reveal data-animation-in="slide-in-up" style="border-radius: 5px; opacity: 0.9">
+		<h2 style="text-align: center;"><strong>Sorry, you've already played this game</strong></h2>
+		<p style="text-align: center;">This game may not be replayed and you have completed it already. Dismiss to view your game results.</p>
+		<!-- <button class="close-button" data-close aria-label="Close reveal" type="button" onclick="closeModal('endModal')"> -->
 		<button class="close-button" data-close aria-label="Close reveal" type="button">
 			<span aria-hidden="true">&times;</span>
 		</button>
@@ -403,7 +449,7 @@ if ($gameInfo['mode'] == 'multi') $startGame = false;
 	<!-- Hidden inputs containing values from game setup (used by python script for calculations) -->
 	<input id="dIntr" type="hidden" value="<?=$gameInfo['demand_intercept']?>">
 	<input id="dSlope" type="hidden" value="<?=$gameInfo['demand_slope']?>">
-	<input id="cCost" type="hidden" value="<?=$gameInfo['const_cost']?>">
+	<input id="cCost" type="hidden" value="<?=$gameInfo['unit_cost']?>">
 	<input id="fCost" type="hidden" value="<?=$gameInfo['fixed_cost']?>">
 	<input id="numRounds" type="hidden" value="<?=$gameInfo['num_rounds']?>">
 
@@ -421,376 +467,559 @@ if ($gameInfo['mode'] == 'multi') $startGame = false;
     <script src="../js/node_modules/chart.js/dist/Chart.js"></script>
 	<script src="//cdn.jsdelivr.net/npm/alertifyjs@1.11.1/build/alertify.min.js"></script-->
 
-    <!-- absolute dependencies as seen in perfect_game -->
-    <script src="../js/node_modules/chart.js/dist/Chart.js"></script>
-    <script src="../node_modules/chartjs-plugin-annotation/chartjs-plugin-annotation.js"></script>
-    <script src="//cdn.jsdelivr.net/npm/alertifyjs@1.11.1/build/alertify.min.js"></script>
-    <script src="https://code.jquery.com/jquery-3.4.1.min.js" integrity="sha256-CSXorXvZcTkaix6Yvo6HppcZGetbYMGWSFlBw8HfCJo=" crossorigin="anonymous"></script>
-    <script src="https://cdnjs.cloudflare.com/ajax/libs/what-input/5.2.6/what-input.min.js" integrity="sha256-yJJHNtgDvBsIwTM+t18nNnp9rEXdyZ1knji5sqm4mNw=" crossorigin="anonymous"></script>
-    <script src="https://cdnjs.cloudflare.com/ajax/libs/foundation/6.6.1/js/foundation.min.js" integrity="sha256-tdB5sxJ03S1jbwztV7NCvgqvMlVEvtcoJlgf62X49iM=" crossorigin="anonymous"></script>
-    <script src="../js/app.js"></script>
-
+    <!--script src="../js/app.js?t=<?=$timestamp?>"></script-->
     <script type="text/javascript">
-    	// submissions
-    	var quantity, oppQuantity;
-    	const numRounds = parseInt($('#numRounds').val(), 10);
 
-    	var gameIsComplete = false;
+        /* =============== */
+        /* === GLOBALS === */
+        /* =============== */
 
-    	broadcast_web_socket = null;
-    	room_web_socket = null;
+        const gameOptionsUnderscores = { <?=
+                			join(",\n\t\t\t\t\t\t\t  ", array_map(function ($key, $value) { return $key . ":" . '"'.$value.'"'; }, array_keys($gameInfo), array_values($gameInfo)));
+                			?>};
+        const gameOptions = objMapValues( v => parseInt(v) || v, objMapKeys(snakeToCamel, gameOptionsUnderscores));
+        const maximumQuantity = calculateMaxQuantity(gameOptions);
+        let year = 1;
 
-    	// Economic Data
-    	// -------------
-    	var year = 1;
-    	var cumulativeRevenue = 0;
-    	var cumulativeProfit = 0;
-    	var cumulativeHistory = [];
-    	var cumulativeProfHistory = [];
-    	var quantityHistory = [];
-    	var revenueHistory = [];
-    	var profitHistory = [];
-    	var ttlCostHist = [];
-    	var avgTtlCostHist = [];
-    	var priceHistory = [];
-    	var marginalCostHist = [];
+        const socketEventIdToEventName =    {   0 : 'opponent exit',
+                                                1 : 'opponent ready',
+                                                2 : 'opponent submission',
+                                                3 : 'student submission'};
 
-    	// opponent data for multiplayer games
-    	var oppCumulativeRevenue = 0;
-    	var oppCumulativeProfit = 0;
-    	var oppCumulativeHistory = [];
-    	var oppCumulativeProfHistory = [];
-    	var oppProfitHistory = [];
-    	var oppRevenueHistory = [];
-    	var oppQuantityHistory = [];
-    	// -------------------
+    	let   isGameComplete = false;
+        const isMultiplayer = gameOptions['marketStructureName'] == "oligopoly";
 
+        const numInitSummaryTableRows = $('#summaryTable tr').length;
 
-	    var groupId = (Math.random()+1).toString(36).slice(2, 18);
+        const instructorSocket  = tsugiNotifySocket(gameOptions['gameId']);
+        let oppSocket; // cannot open socket without session id, which is not known until we have joined a game
 
-	    if ('<?=$gameInfo['mode']?>' == 'single') {
-	    	$('#beginModal').foundation('open');
-	    }
-	    else {
-	    	$.ajax({
-		  		url: '<?= addSession("utils/websocket_util.php") ?>',
-		  		method: 'POST',
-	  			data: { action: 'join_multi', game_id: $('#game_id').val(), username: $('#usrname').val(), group_id: groupId },
-	  			success: function(response) {
+        // for debugging/socket understanding
+        let   oppSocketWasOpened = false;
+        let   instructorSocketWasOpened = false;
+
+        if( instructorSocket ){
+            instructorSocket.onopen = function(evt){ console.log("instructor socket opened"); instructorSocketWasOpened = true; }
+            instructorSocket.onclose = function(evt){ console.log("instructor socket " + (instructorSocketWasOpened ? "closed" : "failed to open"))}
+        }
+        else {
+            console.log("no socket configured (instructor)");
+        }
+
+        const myUserId = <?= $USER->id ?>;
+        const myUsername = "<?= $USER->displayname ?>";
+        let oppUserId;
+        let oppName;
+
+        const myData = {};
+        const opponentData = {};
+        // price is a session, rather than player, level property
+        //  - not stored as data of one or both players
+        const priceHistory = [];
+
+        let timerSecondsRemaining = gameOptions['timeLimit'] * 60;
+        const timeLimitInSeconds = timerSecondsRemaining; // for resetting timer and calculatin timer bar percentage width
+        let timerIntervalId = null;
+
+        /* ======================== */
+        /* === SIMULATION SETUP === */
+        /* ======================== */
+
+        // having weird foundation bugs: can't close instruction or end game modals via the 'x'
+        // previously in app.js, moved here to try to get around weird Foundation bugs
+        Foundation.addToJquery($);
+        jQuery(document).foundation();
+        $('#beginModal').foundation();
+        $('#instructionsModal').foundation();
+        $('#endModal').foundation();
+
+        /* hide some DOM elements, update others */
+        $('#waitOppSub').hide();
+        $('#summarySection').hide();
+        $('#oppNameDisplay').hide();
+        $("#quantityInput").attr('placeholder', `1 - ${maximumQuantity} Units`);
+
+    	window.onbeforeunload = leaveGame;
+        /* function () {
+    	    leaveGame();
+    	}; */
+
+        /* join game */
+        $.ajax({
+            url: '<?= addSession("utils/session.php") ?>',
+            method: 'POST',
+            data: {
+                action: 'joinGame',
+                gameId: gameOptions['gameId'],
+                playerId: myUserId,
+                marketStructureName: gameOptions['marketStructureName']
+            },
+            success: function(responseJson){
+                console.log(responseJson);
+                responseObj = JSON.parse(responseJson);
+                mySessionId = responseObj['sessionId'];
+
+                if( isMultiplayer ){
+                    oppSocket = tsugiNotifySocket(mySessionId);
+                    if( oppSocket ){
+                        // debugging info
+                        oppSocket.onopen  = function(evt){ console.log("opponent socket opened"); oppSocketWasOpened = true; }
+                        oppSocket.onclose = function(evt){ console.log("opponent socket " + (oppSocketWasOpened ? "closed" : "failed to open"))}
+                    }
+                    else {
+                        console.log("no socket configured (opp)");
+                        if( isMultiplayer ){
+                            // alert player that we need access to Tsugi's socket functionality to play multiplayer: probably tell them to contact Tsugi admin
+                        }
+                    }
+                    oppSocket.onmessage = oppSocketMessageCallback;
+
+                    if( responseObj['result'] == 'ready' ){
+                        startGameScreen();
+                        console.log("attempting to send socket message 'ready'");
+                        saveOppName(responseObj['yourOppName']);
+                        socketSendSafe(oppSocket, JSON.stringify({'eventId':1, 'yourOppName': myUsername}));
+                    }
+                }
+                else {
+                    switch(responseObj['result']){
+                        case "new":
+                            startGameScreen();
+                            break;
+                        case "rejoined":
+                        case "completed":
+                        // both rejoined and completed feed here
+
+                            // back-process data
+                            let myYearStats = null;
+                            for( const q of (responseObj['quantityHistory'].slice(0, gameOptions['numRounds'])
+                                             ? responseObj['quantityHistory'].split(',')
+                                             : []) ){
+                                myYearStats = calculateYearStats(q);
+                                updatePlayerDataAnnual(myYearStats);
+                            }
+                            year = priceHistory.length + 1;
+                            updateYearDisplays(year - 1);
+                            if( myYearStats ){ // checks if quantity was indeed previous submitted ( could rejoin after leaving with 0 submissions)
+                                updateInfoScreensMyData(formatYearStats(myYearStats));
+                                $("#preStartPrompt").hide();
+                                $("#summarySection").show();
+                            }
+
+                            if( responseObj['result'] == "completed" )  openModal('alreadyPlayedModal');
+                            else                                        startGameScreen();
+                            break;
+                        default:
+                            // error
+                            console.error(`reached default for singleplayer join game response result string - result: ${result}`);
+                            break;
+                    }
+                }
+            }
+        })
+
+        /* === FUNCTIONS === */
+
+        /*
+        // previous idea: register socket callbacks - that way, you can attach various callbacks at different points
+        function registerOppSocketCallback(callback, args=null){
+            oppSocket.onmessage = function(evt){
+                console.log("received message with event: ");
+                console.log(event);
+                if (evt.data = "exit") {
+                    const urlPrefix = window.location.href.substr(0, window.location.href.indexOf('src'));
+                    window.location = urlPrefix+'src/student.php?session=err2';
+                }
+                else {
+                    // abusing the fact that javascript functions are stupid and do not reject calls with don't match their signature
+                    //  - doesn't matter if you pass a function too many args
+                    callback.apply([evt.data].concat(args || []));
+                }
+            }
+
+            switch(socketEventIdToEventName[])
+        }
+        */
+
+        /* --- foundation hack since modals were not opening and closing as expected --- */
+        function openModal(modalId){
+            (new Foundation.Reveal($(`#${modalId}`))).open();
+    		//$(`#${modalId}`).foundation('open');
+        }
+
+        function closeModal(modalId){
+            //(new Foundation.Reveal($(`#${modalId}`))).close();
+            $(`#${modalId}`).foundation('close');
+        }
+        /* ----------------------------------------------------------------------------- */
+
+        function startGameScreen(){
+            openModal('beginModal');
+            dismissWaitScreen();
+            if( isMultiplayer )     $('oppNameDisplay').show();
+        }
+
+        function closeStartScreen(){
+            closeModal('beginModal');
+            startTimer();
+        }
+
+    	// hide the multiplayer "waiting for opponent" overlay, allowing gameplay to start
+    	function dismissWaitScreen() {
+    		$('#multWaitScreen').css('display','none');
+    		$('.off-canvas-content').css('filter','none');
+    		$('.footer').css('filter','none');
+    	}
+
+    	function leaveGame() {
+    		const urlPrefix = window.location.href.substr(0, window.location.href.indexOf('src'));
+      		// if its a multi game, notify opponent
+            if( isMultiplayer )
+                socketSendSafe(oppSocket, JSON.stringify({'eventId':0}));
+
+      		// exit to student.php
+      		if (!isGameComplete)
+      			window.location = urlPrefix + '<?= addSession("src/student.php?session=left") ?>';
+      		else
+      			window.location = urlPrefix + '<?= addSession("src/student.php?session=comp") ?>';
+    	}
+
+        function saveOppName(oppNameLocal){
+            oppName = oppNameLocal;
+            $(".oppName").text(oppNameLocal);
+            $('#oppNameDisplay').show();
+        }
+
+        function oppSocketMessageCallback(evt){
+            console.log(evt);
+            const evtObj = JSON.parse(evt.data);
+            // used string comparisons here to make this code more readable
+            //  - however, integer comparisons would be more time and space efficient
+            //  - if we optimizations become necessary later, this is an easy one
+            switch(socketEventIdToEventName[evtObj['eventId']]){
+                case 'opponent exit':
+                    const urlPrefix = window.location.href.substr(0, window.location.href.indexOf('src'));
+                    window.location = addSession(urlPrefix+'src/student.php?session=err2');
+                    break;
+                case 'opponent ready':
+                    saveOppName(evtObj['yourOppName']);
+                    startGameScreen();
+                    break;
+                case 'opponent submission':
+                    processRoundData(evtObj['yourQuantity'], evtObj['yourOppQuantity']);
+                    prepareForNextSubmission(year);
+                    break;
+                default:
+                    console.error(`Reached default in oppSocketMessageCallback - event: ${evt}`)
+                    break;
+            }
+        }
+
+        function socketSendSafe(socket, message){
+            console.log(`attempting to send message ${message}`);
+            if( !socket )                               console.error(`[FATAL ERROR] Sockets are unavailable. Likely causes:\n\t- websockets not enabled on this Tsugi server\n\t- websocket server not started\nSocket ${socket.url.match(/room=(\d+)/)[1]} could not be opened`)
+            else if( socket.readyState == socket.OPEN ) socket.send(message);
+            else                                        socket.onopen = function(evt){ console.log(`socket ${socket.url.match(/room=(\d+)/)[1]} opened`); socket.send(message); }
+        }
+
+        function pingInstructor(){
+            socketSendSafe(instructorSocket, JSON.stringify({'eventId' : 3}));
+        }
+
+    	function tickTimer() {
+            --timerSecondsRemaining;
+
+    	    if (timerSecondsRemaining == 0) { // if time runs out notify user. submit quanitity. restart timer
+                const quantitySubmitted = $("#quantityInput").val() || "1";
+
+    	        $('#quantityInput').val(quantitySubmitted);
+
+        	    alertify.set('notifier','delay', 3);
+        		alertify.set('notifier','position', 'top-right');
+        		alertify.error(`<i class="fas fa-exclamation-circle"></i><br><strong>Year: ${year} - Time\'s Up!</strong><br>${quantitySubmitted} was submitted.`);
+
+        	  	submitResponse(parseInt(quantitySubmitted));
+            }
+
+        	const minute = Math.floor((timerSecondsRemaining)/60);
+        	const seconds = timerSecondsRemaining - (minute*60);
+
+        	// show progress bar visualizing time left
+        	const percent = ((timerSecondsRemaining/timeLimitInSeconds)*100).toPrecision(3);
+        	//if      (percent <= 25)    $('#progressBar').attr('class', 'progress-danger progress');
+        	if (percent <= 25)         $('#progressContainer').attr('class', 'progress-danger progress'); //$('#progressContainer').attr('class', 'progress');
+        	else if (percent <= 50)    $('#progressContainer').attr('class', 'warning progress');
+        	$('#progressBar').css("width", percent+"%");
+
+        	$("#timer").text( `${minute}:${(seconds < 10 ? `0${seconds}` : seconds)}` );
+    	}
+
+    	// Submit button click callback
+        function submitQuantityButtonCallback(quantity) {
+            /* get ball rolling upon quantity submission: validates input, then passes to submitResponse */
+            const quantityInt = parseInt(quantity);
+            //const quantityInt = quantity;
+      		// check validity
+      		if( quantityInt >= 1 && quantityInt <= maximumQuantity ){
+    	  		submitResponse(quantityInt);
+    	  	}
+            // reject invalid submissions
+            else { // If user hasn't entered quantity or entered invalid quantity, button will shake and show message
+    	  		alertify.set('notifier','delay', 3);
+    			alertify.set('notifier','position', 'top-right');
+    			alertify.error(`<p style="text-align: center; margin: 0;"><i class="fas fa-exclamation-triangle" style=""></i><br>Please enter valid quantity!<br>(1-${maximumQuantity} units)</p>`);
+    	  		$('#submitQuantityButton').addClass('animated shake').one('webkitAnimationEnd mozAnimationEnd', function() {
+        			$(this).removeClass('animated shake');
+        		});
+    	    }
+        }
+
+    	function submitResponse(quantity) {
+            /* high level response to a submittion:
+                - disable and later re-enable submit button
+                - hide/show DOM elements as needed
+                - stop and later reset and start timer
+                - call data processing functions    */
+
+            // disable submit button until finished processing
+    	  	$('#submitQuantityButton').prop('disabled', true); // disable submit button so it isn't pressed twice for same year
+            stopTimer();
+
+            // use promise-like feature of jQuery's ajax (deferred value)
+            recordSubmissionInDb(quantity)
+                .done(response => {
+                    pingInstructor();
                     console.log(response);
-	  				// if response is returned, the user joined a waiting player, so game can start
-	  				if (response) {
-	  					let json = JSON.parse(response);
-	  					if (json[0].length > 10)
-							groupId=json[0].substring(0, json[0].length - 1);
-						else
-							groupId=json[0];
+                    if( !isMultiplayer )    return; // nothing to do here
+                    if( response ){
+                        oppQuantity = parseInt(response);
+                        socketSendSafe(oppSocket, JSON.stringify({'eventId' : 2, 'yourQuantity': oppQuantity, 'yourOppQuantity' : quantity}));
+                        processRoundData(quantity, oppQuantity);
+                        prepareForNextSubmission(year);
+                    }
+                    else{
+                        // block until other player submits
+                        $('#waitOppSub').show();
+                    }
+                })
+                .fail(e => console.log(e));
 
-	  					// join socket to room
-	  					room_web_socket = tsugiNotifySocket(groupId);
+            // process results (add to data objects, update summary screens)
+    	  	// in singleplayer market, can go ahead don't need to wait for DB response
+            //  - can go ahead and start processing data
+            //  - may be executed while waiting for DB call promise
+    	    if( !isMultiplayer ){
+    	    	// call function to get results from the year based on submission and update UI
+                processRoundData(quantity, null);
+                prepareForNextSubmission(year);
+    		}
+    	}
 
-	  					// hide the wait screen
-						dismissWaitScreen();
-						// open instructions
-						$('#beginModal').foundation('open');
+        function recordSubmissionInDb(quantity, isFinalSubmission){
+            console.log('recording quantity');
+            const postData = {  action      : 'recordSubmission',
+                                sessionId   : mySessionId,
+                                playerId    : myUserId,
+                                quantity    : quantity,
+                                marketStructureName   : gameOptions['marketStructureName'],
+                                isFinalSubmission : isFinalSubmission ? 1 : 0  };
+            console.log(postData);
+            return $.ajax({
+                url: '<?= addSession("utils/session.php") ?>',
+                method: 'POST',
+                data: postData
+            });
+        }
 
-						// set labels based on opponent and groupId recieved
-						let opp = json[1].substring(0, json[1].indexOf('@'));
-						$('#opponent').val(opp);
-						$('.competition').text(opp);
-						$('span.title-bar-title > h6').css('display', 'inherit');
+        function processRoundData(myQuantity, oppQuantity=null){
+            // administrative function which coordinates all the data processing
 
-						// send message to room to notify other player that game is starting
-						room_web_socket.onopen = function(evt) {
-							room_web_socket.send($('#usrname').val());
-						}
+            // for singleplayer game, expect oppQuantity to be null
+            // which pattern is better: check whether oppQuantity is null here or call functions that may receive and return null?
+            const myYearStats  = calculateYearStats(myQuantity,  oppQuantity ? [oppQuantity] : []);
+            const oppYearStats = calculateYearStats(oppQuantity, [myQuantity]); // may be null
 
-	  				}
-	  				// if no response returned, user joined new game and is waiting for opponent
-	  				else {
-	  					if (groupId.length > 10)
-							groupId=groupId.substring(0, groupId.length - 1);
+            updatePlayerDataAnnual(myYearStats, false);
+            updatePlayerDataAnnual(oppYearStats, true);
 
-					  	room_web_socket = tsugiNotifySocket(groupId);
-					  	room_web_socket.onmessage = function(evt) {
-					  		if (evt.data.includes('@')) {
-						        // hide the wait screen
-								dismissWaitScreen();
-								// open instructions
-								$('#beginModal').foundation('open');
+            // maybe add option to updateInfoScreensMyData to not draw graphs at the end (currently graphs re-drawn at end of both functions following)
+            updateInfoScreensMyData(formatYearStats(myYearStats));
+            updateInfoScreensOppData(formatYearStats(oppYearStats));
+        }
 
-								// set labels based on opponent and groupId recieved
-								let opp = evt.data.substring(0, evt.data.indexOf('@'));
-								$('#opponent').val(opp);
-								$('.competition').text(opp);
-								$('span.title-bar-title > h6').css('display', 'inherit');
-							}
-							else if (evt.data = "exit") {
-								const urlPrefix = window.location.href.substr(0, window.location.href.indexOf('src'));
-								window.location = urlPrefix+'src/student.php?session=err2';
-							}
-					    };
-					}
+        // here, we use a data storage paradigm that allows myData and opponentData to be manipulated in the same way
+        //  - each are global maps of stat names to values or arrays
+        function calculateYearStats(myQuantity, oppQuantities=null){
+            if( myQuantity === null ) return null;
+            // prevent python problem of binding mutable default parameters
+            marketPrice = calculatePrice((oppQuantities || []).concat(myQuantity), gameOptions['demandIntercept'], gameOptions['demandSlope']);
+            totalCost   = calculateTotalCost(myQuantity, gameOptions['fixedCost'], gameOptions['unitCost']);
 
-	  			}
-	  		});
-	    }
+            // derive basic results
+            revenue  = marketPrice * myQuantity;
+            profit   = revenue - totalCost;
+            avgCost  = totalCost / myQuantity;
+            returnOnInvestment = profit / totalCost * 100;
 
+            myYearStats = {   'quantity'     : myQuantity,
+                              'marketPrice'  : marketPrice,
+                              'totalCost'    : totalCost,
+                              'revenue'      : revenue,
+                              'profit'       : profit,
+                              'avgCost'      : avgCost,
+                              'returnOnInvestment' : returnOnInvestment     };
 
-		// singleplayer submission occured
-		function getSingleResults(quantity) {
-			var gameOver = true;
-			if (year != numRounds) intervalId = setInterval(startTimer, 1000);
+            return myYearStats;
+        }
 
-			$.ajax({
-				url: "http://localhost:8888/cgi-bin/econ_test/single?quantity="+quantity+"&intercept="+$('#dIntr').val()+"&slope="+$('#dSlope').val()+"&fixed="+$('#fCost').val()+"&const="+$('#cCost').val(),
-				success: function(data) {
-					var json = JSON.parse(data);
+        function updatePlayerDataAnnual(yearStats, isOpp=false){
+            if( yearStats === null) return;
+            toUpdate = isOpp ? opponentData : myData;
 
-					$('#preStartPrompt').css('display','none');
-					// Enable/update summary display content
-					if (year != numRounds) {
-					  	document.getElementById("summarySection").style.display = "";
-					  	document.getElementById("summaryYear").innerHTML = "Summary for Year "+year;
-					  	year+=1;
-					  	$('.yearSpan').text(year-1);
-					  	document.getElementById("year").innerHTML = "<b>Year:</b> "+year;
-					  	gameOver = false;
-					}
+            ['profit', 'revenue', 'totalCost', 'avgCost', 'quantity'].forEach(stat =>
+                toUpdate[stat+'History'] = safeObjAcc(toUpdate, stat+'History', []).concat(yearStats[stat])
+            );
 
-				  	// save equilibrium to database for display in instructor results
-				  	$.ajax({
-				  		url: '<?= addSession("utils/game_util.php") ?>',
-				  		method: 'POST',
-			  			data: { equilibrium: json['equilibrium'], id: $('#game_id').val() }
-			  		});
+            // price history doesn't belong to one player, but we have to update it at some points
+            //  - here, I attempt to safeguard against pushing price data twice in a year
+            if( priceHistory.length < toUpdate['quantityHistory'].length )
+                priceHistory.push(yearStats['marketPrice']);
+        }
 
-					// update values based on retrieved data
-					cumulativeRevenue += json['totalRevenue'];
-					cumulativeProfit += json['profit'];
-					cumulativeHistory.push(cumulativeRevenue);
-					cumulativeProfHistory.push(cumulativeProfit);
-					profitHistory.push(json['profit']);
-					revenueHistory.push(json['totalRevenue']);
-					ttlCostHist.push(json['totalCost']);
-					avgTtlCostHist.push(json['averageTotalCost']);
-					quantityHistory.push(quantity);
-					priceHistory.push(json['demand']);
-					marginalCostHist.push(json['unitCost']);
+        function formatYearStats(yearStats){
+            if( yearStats === null) return null;
+            console.log(`formatYear: ${year}`);
+            console.log(yearStats);
+            formattedSummaryStats = {   'marketPrice'       : formatDollarAmount(yearStats['marketPrice']),
+                                        'quantity'          : yearStats['quantity'].toString(),
+                                        'revenue'           : formatDollarAmount(yearStats['revenue']),
+                                        'profit'            : formatDollarAmount(yearStats['profit']),
+                                        'cumulativeProfit'  : formatDollarAmount(sumArr(myData['profitHistory'])),
+                                        'totalCost'         : formatDollarAmount(yearStats['totalCost']),
+                                        'avgCost'           : formatDollarAmount(yearStats['avgCost']),
+                                        'returnOnInvestment': yearStats['returnOnInvestment'].toPrecision(4)+"%"         };
+            return formattedSummaryStats;
+        }
 
-			        // correctly format output with commas and negatives where neccissary
-			        var marketPriceString, revenueString, profitString, cumulativeString;
-			        if (json['demand'] < 0 ) marketPriceString = '-$'+(json['demand']*(-1)).toLocaleString();
-			        else marketPriceString = '$'+json['demand'].toLocaleString();
-			        if (json['totalRevenue'] < 0 ) revenueString = '-$'+(json['totalRevenue']*(-1)).toLocaleString();
-			        else revenueString = '$'+json['totalRevenue'].toLocaleString();
-			        if (json['profit'] < 0 ) profitString = '-$'+(json['profit']*(-1)).toLocaleString();
-			        else profitString = '$'+json['profit'].toLocaleString();
-			        if (cumulativeProfit < 0 ) cumulativeString = '-$'+(cumulativeProfit*(-1)).toLocaleString();
-			        else cumulativeString = '$'+cumulativeProfit.toLocaleString();
+        function updateInfoScreensMyData(formattedSummaryResults){
+            // set summary screen info
+            $("#marketPrice").text(formattedSummaryResults['marketPrice']);
+            $("#quantityDisplay").text(formattedSummaryResults['quantity'] + " Units");
+            $("#revenue").text(formattedSummaryResults['revenue']);
+            $("#avgCost").text(formattedSummaryResults['avgCost']);
+            $("#totalCost").text(formattedSummaryResults['totalCost']);
+            $("#profit").text(formattedSummaryResults['profit']);
+            $("#cumulativeProfit").text(formattedSummaryResults['cumulativeProfit']);
 
-					// Set text in summary section to represent retrieved data
-					document.getElementById("marketPrice").innerHTML = marketPriceString;
-					document.getElementById("prodQuantity").innerHTML = quantity+ " Units";
-					document.getElementById("revenue").innerHTML = revenueString;
-					document.getElementById("unitCost").innerHTML = json['unitCost'];
-					document.getElementById("ttlCost").innerHTML = json['totalCost'].toLocaleString();
-					document.getElementById("profit").innerHTML = profitString;
-					document.getElementById("cumulative").innerHTML = cumulativeString;
+            // set income screen info
+            $('#liRevenue').text(formattedSummaryResults['revenue']);
+            $('#liNet').text(formattedSummaryResults['profit']);
+            $('#liPrice').text(formattedSummaryResults['marketPrice']);
+            $('#liReturn').text(formattedSummaryResults['returnOnInvestment']);
 
-					// set income screen stuff
-					$('#liRevenue').text(revenueString);
-					$('#liNet').text(profitString);
-					$('#liPrice').text(marketPriceString);
-					$('#liReturn').text(json['percentReturn'].toPrecision(4)+'%');
+            // set cost screen info
+            $('#liSales').text(formattedSummaryResults['quantity']+" Units");
+            $('#liPrice2').text(formattedSummaryResults['marketPrice']);
+            $('#liAvgCost').text(formattedSummaryResults['avgCost'] + " / Unit");
+            $('#liTotalCost').text(formattedSummaryResults['totalCost']);
 
-					// set cost screen stuff
-					$('#liSales').text(quantity+" Units");
-					$('#liPrice2').text('$'+json['demand'].toLocaleString());
-					$('#liMarginal').text('$'+json['unitCost']+"/Unit");
-					$('#liProduction').text('$'+json['totalCost'].toLocaleString());
+            // redraw graphs
+            drawGraphs();
+        }
 
-					// redraw graph
-					init('dashboard_section');
-					init('income_section');
-					init('cost_section');
+        function updateInfoScreensOppData(oppFormattedSummaryResults){
+            if( oppFormattedSummaryResults === null) return;
 
-					// enable button
-					if (!gameOver) $('#price_submit_btn').prop('disabled', false);
+            // add a new row to display opponent quantity if we have not already
+            if( $('#summaryTable tr').length == numInitSummaryTableRows /* year == 1 */){
+                const oppRow = document.getElementById('summaryTable').insertRow(2);
+                oppRow.insertCell(0).innerHTML = "Opponent Output";
+                oppRow.insertCell(1).id = "oppQuantityDisplay";
+            }
+            $('#oppQuantityDisplay').text(oppFormattedSummaryResults['quantity']+" Units");
 
-					// call func to submit data in querry
-					$.ajax({
-				  		url: '<?= addSession("utils/session.php") ?>',
-				  		method: 'POST',
-			  			data: { action: 'update_gameSessionData', groupId: groupId, username: $('#usrname').val(), opponent: null, quantity: quantity, revenue: json['totalRevenue'],
-			  				profit: json['profit'], percentReturn: json['percentReturn'].toPrecision(4), price: json['demand'], unitCost: json['unitCost'], totalCost: json['totalCost'], complete: gameOver?1:0, gameId: <?= $gameInfo['game_id'] ?>  }
-			  		});
+            // income screen
+            $('#liRevenueOpp').text(oppFormattedSummaryResults['revenue']);
+            $('#liProfitOpp').text(oppFormattedSummaryResults['profit']);
+            $('#liReturnOpp').text(oppFormattedSummaryResults['returnOnInvestment']);
 
+            drawGraphs(['dashboard_section', 'income_section']);
+        }
 
-			  		// send message to notify instructor results to update
-					if (!broadcast_web_socket) {
-				  		broadcast_web_socket = tsugiNotifySocket();
-				  		broadcast_web_socket.onopen = function(evt) {
-							broadcast_web_socket.send($('#game_id').val());
-						}
-					}
-					else
-						broadcast_web_socket.send($('#game_id').val());
+        function updateYearDisplays(submissionYear){
+            // Enable/update year displays
+            $('.previousYearSpan').text(submissionYear);
+            if( submissionYear != gameOptions['numRounds'] ){
+                $('.currentYearSpan').text(submissionYear + 1);
+            }
+        }
 
-				}
-			});
-		}
+        function prepareForNextSubmission(){
+            isGameComplete = year == gameOptions['numRounds'];
+            // on first submission, reveal summary section and hide pre-start prompt
+            if( year == 1 ){
+                $('#summarySection').show();
+                $('#preStartPrompt').hide();
+            }
+            updateYearDisplays(year);
+            $("#waitOppSub").hide();
 
-		// // multiplayer submission occured
-   		function getMultiResults(submitData) {
-   			var gameOver = true;
-   			if (year != numRounds) intervalId = setInterval(startTimer, 1000);
+            // if game is over, display ending modal and stop timer
+            if( isGameComplete ) { // check if the game is over
+                openModal('endModal');
+                $(".progress-danger").addClass(".progress-danger").removeClass(".progress-off");
+    	  	}
+            else {
+                year += 1;
+                startTimer();
+                $('#submitQuantityButton').prop('disabled', false); // re-enable the submit button
+            }
+        }
 
-			$('#preStartPrompt').css('display','none');
+        function startTimer(){
+            timerSecondsRemaining = 60 * gameOptions['timeLimit'];
+        	$('#progressBar').css("width", "100%");
+            $('#timer').text(`${gameOptions['timeLimit']}:00`);
+    	  	$('#progressContainer').attr('class', 'success progress');
+            timerIntervalId = setInterval(tickTimer, 1000);
+        }
 
-			// hide spinner
-			$('#waitOppSub').css('display', 'none');
+        function stopTimer(){ clearInterval(timerIntervalId); }
 
-			// set variables with submission for correct player
-			if ($('#usrname').val() == submitData[0]) {
-				oppQuantity = submitData[3];
-				quantity = submitData[1];
-			}
-    		else {
-    			oppQuantity = submitData[1];
-    			quantity = submitData[3];
- 			}
+    	// callback to change screen content, triggered by off canvas menu
+    	function change_content(to_section) {
+    		if (to_section == 'instructions') {
+                openModal('instructionsModal');
+    			return;
+    		}
 
-    		// call python script to get results
-	    	$.ajax({
-	    		url: "http://localhost:8888/cgi-bin/econ_test/multi?q1="+quantity+"&q2="+oppQuantity+"&intercept="+$('#dIntr').val()+"&slope="+$('#dSlope').val()+"&fixed="+$('#fCost').val()+"&const="+$('#cCost').val(),
-	    		success: function(data) {
+    		const headers = {"dashboard_section": "Dashboard", "income_section": "Income Statement", "cost_section": "Cost Data"};
 
-					var json = JSON.parse(data);
+    		if ( year > 1 ) { // make sure a submit has occured before being able to switch to info sections
+	    		document.body.scrollTop = document.documentElement.scrollTop = 0; // force page to top
 
-					// Enable/update summary display content
-					if (year != numRounds) {
-					  	document.getElementById("summarySection").style.display = "";
-					  	document.getElementById("summaryYear").innerHTML = "Summary for Year "+year;
-					  	year+=1;
-					  	$('.yearSpan').text(year-1);
-					  	document.getElementById("year").innerHTML = "<b>Year: </b>"+year;
-					  	gameOver = false;
-					 }
+                $(".display_sections").hide();
+                $(`#${to_section}`).show();
+	    		$('#dynamicHeader').text(headers[to_section]);
 
-				  	// save equilibrium to database for display in instructor results
-				  	$.ajax({
-				  		url: '<?= addSession("utils/game_util.php") ?>',
-				  		method: 'POST',
-			  			data: { equilibrium: json['equilibrium'], id: $('#game_id').val() }
-			  		});
-
-					// update values based on retrieved data
-					cumulativeRevenue += json['revenue1'];
-					cumulativeProfit += json['profit1'];
-					oppCumulativeRevenue += json['revenue2'];
-					oppCumulativeProfit += json['profit2'];
-					oppCumulativeHistory.push(oppCumulativeRevenue);
-					oppCumulativeProfHistory.push(oppCumulativeProfit);
-					cumulativeHistory.push(cumulativeRevenue);
-					cumulativeProfHistory.push(cumulativeProfit);
-					oppProfitHistory.push(json['profit2']);
-					oppRevenueHistory.push(json['revenue2']);
-					profitHistory.push(json['profit1']);
-					revenueHistory.push(json['revenue1']);
-					ttlCostHist.push(json['totalCost']);
-					avgTtlCostHist.push(json['averageTotalCost']);
-					quantityHistory.push(quantity);
-					oppQuantityHistory.push(oppQuantity);
-					priceHistory.push(json['demand']);
-					marginalCostHist.push(json['unitCost']);
-
-					// correctly format output with commas and negatives where neccissary
-					var marketPriceString, revenue1String, revenue2String, profit1String, profit1String, cumulativeString;
-			        if (json['demand'] < 0 ) marketPriceString = '-$'+(json['demand']*(-1)).toLocaleString();
-			        else marketPriceString = '$'+json['demand'].toLocaleString();
-			        if (json['revenue1'] < 0 ) revenue1String = '-$'+(json['revenue1']*(-1)).toLocaleString();
-			        else revenue1String = '$'+json['revenue1'].toLocaleString();
-			        if (json['revenue2'] < 0 ) revenue2String = '-$'+(json['revenue2']*(-1)).toLocaleString();
-			        else revenue2String = '$'+json['revenue2'].toLocaleString();
-			        if (json['profit1'] < 0 ) profit1String = '-$'+(json['profit1']*(-1)).toLocaleString();
-			        else profit1String = '$'+json['profit1'].toLocaleString();
-			        if (json['profit2'] < 0 ) profit2String = '-$'+(json['profit2']*(-1)).toLocaleString();
-			        else profit2String = '$'+json['profit2'].toLocaleString();
-			        if (cumulativeProfit < 0 ) cumulativeString = '-$'+(cumulativeProfit*(-1)).toLocaleString();
-			        else cumulativeString = '$'+cumulativeProfit.toLocaleString();
-
-					// Set text in summary section to represent retrieved data
-					document.getElementById("marketPrice").innerHTML = marketPriceString;
-					document.getElementById("prodQuantity").innerHTML = quantity + " Units";
-					document.getElementById("revenue").innerHTML = revenue1String;
-					document.getElementById("unitCost").innerHTML = json['unitCost'];
-					document.getElementById("ttlCost").innerHTML = json['totalCost'];
-					document.getElementById("profit").innerHTML = profit1String;
-					document.getElementById("cumulative").innerHTML = cumulativeString;
-
-					// add row for opponent's value after the row for current player's value
-					var table = document.getElementsByClassName('paleBlueRows')[0];
-					if (year == 2) {
-						var row = table.insertRow(2);
-						var cell1 = row.insertCell(0);
-						var cell2 = row.insertCell(1);
-						cell2.id="opponentProductionCell";
-						cell1.innerHTML="Opponent Output";
-					}
-					$('#opponentProductionCell').text(oppQuantity+" Units");
-
-					// set income screen stuff
-					$('#liRevenue').html('<b>'+revenue1String+'</b>');
-					$('#liRevenueOpp').html('<em>'+revenue2String+'</em>');
-					$('#liNet').html('<b>'+profit1String+'</b>');
-					$('#liNetOpp').html('<em>'+profit2String+'</em>');
-					$('#liReturn').html('<b>'+json['percentReturn1'].toPrecision(4)+'%</b>');
-					$('#liReturnOpp').html('<em>'+json['percentReturn2'].toPrecision(4)+'%</em>');
-					$('#liPrice').text(marketPriceString);
-
-					// set cost screen stuff
-					$('#liSales').text(quantity+" Units");
-					$('#liPrice2').text(marketPriceString);
-					$('#liMarginal').text('$'+json['unitCost']+"/Unit");
-					$('#liProduction').text('$'+json['totalCost']);
-
-					// redraw graph
-					init('dashboard_section');
-					init('income_section');
-					init('cost_section');
-
-					// enable button
-					if (!gameOver) $('#price_submit_btn').prop('disabled', false);
-
-					console.log(groupId);
-
-					// call func to submit data in query
-					$.ajax({
-				  		url: '<?= addSession("utils/session.php") ?>',
-				  		method: 'POST',
-			  			data: { action: 'update_gameSessionData', groupId: groupId, username: $('#usrname').val(), opponent: $('#opponent').val(), quantity: quantity,
-			  				revenue: json['revenue1'], profit: json['profit1'], percentReturn: json['percentReturn1'].toPrecision(4), price: json['demand'],
-			  				unitCost: json['unitCost'], totalCost: json['totalCost'], complete: gameOver, gameId: <?= $gameInfo['game_id'] ?> }
-			  		});
+	    		drawGraph(to_section);
+	    	}
+	    	else { // if no submit yet, show error message
+		  		alertify.set('notifier','delay', 3);
+				alertify.set('notifier','position', 'top-right');
+				alertify.warning(`<p style="text-align: center; margin: 0;"><i class="fas fa-exclamation-triangle"></i><br>Please enter valid quantity!<br>(1- ${maximumQuantity} units)</p>`);
+	    	}
+    	}
 
 
-			  		// send global message for instructor results
-			  		if ($('#usrname').val() == submitData[0]) {
-			  			if (!broadcast_web_socket) {
-							broadcast_web_socket = tsugiNotifySocket();
-							broadcast_web_socket.onopen = function(evt) {
-								broadcast_web_socket.send($('#game_id').val());
-							}
-			  			}
-						broadcast_web_socket.send($('#game_id').val());
-					}
-				}
-			});
-		}
+        function drawGraphs(graphNames=['dashboard_section', 'income_section', 'cost_section']){
+            graphNames.forEach(g => drawGraph(g));
+        }
 
-    	// Scrolling animations
-    	//---------------------------
+        /* ============================ */
+    	/* === Scrolling animations === */
+        /* ============================ */
+
     	var animated = [false,false,false];
     	var animatedB = [false,false,false];
     	$(window).scroll(function() {
@@ -849,212 +1078,47 @@ if ($gameInfo['mode'] == 'multi') $startGame = false;
 		    	}
 		    }
 		});
-		// --------------------------
 
-		// timer set up
-	  var minute = $('#timer').attr('data-legnth');
-	  var seconds = 0;
-	  var totalSeconds = $('#timer').attr('data-legnth')*60;
-	  var storeTotal = totalSeconds;
+        /* ====================================== */
+        /* === CHARTS SETUP AND CONFIGURATION === */
+        /* ====================================== */
 
-	  var intervalId = null;
-
-	  function startTimer() {
-	    --totalSeconds;
-
-	    if (totalSeconds == 0) { // if time runs out notify user. submit quanitity. restart timer
-	    	if ($('#quantity').val()=='')
-	    		$('#quantity').val(quantity);
-
-	    	alertify.set('notifier','delay', 3);
-			alertify.set('notifier','position', 'top-right');
-			alertify.error('<i class="fas fa-exclamation-circle"></i><br><strong>Year: '+year+ ' - Time\'s Up!</strong><br>'+$("#quantity").val()+' was submitted.');
-
-	    	clearInterval(intervalId);
-	    	$('#price_submit_btn').prop('disabled', true);
-
-	    	submitResponse();
-	    }
-
-	    minute = Math.floor((totalSeconds)/60);
-	    seconds = totalSeconds - (minute*60);
-	    (seconds < 10) ? (seconds = "0" + seconds) : seconds = seconds;
-
-	    // show progress bar visualizing time left
-	    var percent = ((totalSeconds/storeTotal)*100).toPrecision(3);
-	    if (percent <= 25) $('#progressContainer').attr('class', 'alert progress');
-	    else if (percent <= 50) $('#progressContainer').attr('class', 'warning progress');
-	    $('#progressBar').css("width", percent+"%");
-	    document.getElementById("timer").innerHTML = minute+":"+seconds;
-	  }
-
-	  // Submit button Pressed
-	  document.getElementById('price_submit_btn').addEventListener('click', function() {
-  		// check validity
-  		if ($('#quantity').val() >= 1 && $('#quantity').val() <= <?=$gameInfo['max_quantity']?>) {
-  			firstSubmit = true;
-	  		$('#price_submit_btn').prop('disabled', true); // disable submit button so it isn't pressed twice for same year
-	  		if (year == numRounds) { // check if the game is over
-	  			submitResponse();
-	  			$('#endModal').foundation('open');
-	  			clearInterval(intervalId);
-
-	  			gameIsComplete = true;
-	  		}
-	  		else
-	  			submitResponse();
-	  	} else { // If user hasn't entered quantity or entered invalid quantity, button will shake and show message
-	  		alertify.set('notifier','delay', 3);
-			alertify.set('notifier','position', 'top-right');
-			alertify.error('<p style="text-align: center; margin: 0;"><i class="fas fa-exclamation-triangle" style=""></i><br>Please  enter valid quantity!<br>(1-<?=$gameInfo["max_quantity"]?> units)</p>');
-	  		$('#price_submit_btn').addClass('animated shake').one('webkitAnimationEnd mozAnimationEnd', function() {
-    			$(this).removeClass('animated shake');
-    		});
-	  	}
-	  });
-
-
-	function submitResponse() {
-		quantity = $("#quantity").val();
-	  	$('#progressContainer').attr('class', 'success progress');
-
-	  	// starts timer
-	  	if (intervalId) {
-	  		clearInterval(intervalId);
-	  		totalSeconds = $('#timer').attr('data-legnth')*60;
-	  		document.getElementById("timer").innerHTML = $('#timer').attr('data-legnth')+":00";
-	  	}
-
-	  	// the following sends the student input to server for saving, server will fire event to call
-	  	// python scripts to get results
-
-	  	// single player
-	    if ($('#mode').val() == 'single') {
-
-	    	// call function to get results from the year based on submission and update UI
-	    	getSingleResults(quantity);
-		}
-		// Multiplayer mode
-		else {
-	  		$.ajax({
-		  		url: '<?= addSession("utils/websocket_util.php") ?>',
-		  		method: 'POST',
-	  			data: { action: 'submit_multi', username: $('#usrname').val(), groupId: groupId, quantity: quantity },
-	  			success: function(response) {
-	  				// if response is returned, both players have submited. (This player submitted second)
-	  				if (response) {
-	  					let json = JSON.parse(response);
-
-
-						room_web_socket.send($('#opponent').val());
-
-
-	  					getMultiResults(json);
-	  				}
-	  				// if no response returned, user joined new game and is waiting for opponent
-	  				else {
-	  					$('#waitOppSub').css('display', 'inherit');
-
-	  					// wait for message that other player has submitted
-					  	room_web_socket.onmessage = function(evt) {
-					  		if (evt.data==$('#usrname').val().substring(0, $('#usrname').val().indexOf('@'))) {
-					  			// grab opponent's submission data from database
-					  			$.ajax({
-							  		url: '<?= addSession("utils/websocket_util.php") ?>',
-							  		method: 'POST',
-						  			data: { action: 'get_opponent_data', groupId: groupId },
-						  			success: function(response) {
-						  				var json = JSON.parse(response);
-						  				var tmpArr = [$('#usrname').val(), quantity];
-						  				json = tmpArr.concat(json);
-						  				getMultiResults(json);
-						  			}
-						  		});
-					  		}
-					  		else if (evt.data = "exit") {
-								const urlPrefix = window.location.href.substr(0, window.location.href.indexOf('src'));
-								window.location = urlPrefix+'src/student.php?session=err2';
-							}
-					    };
-					}
-
-	  			}
-	  		});
-		}
-	}
-
-	// hide the waiting overlay, allowing gameplay to start
-	function dismissWaitScreen() {
-		$('#multWaitScreen').css('display','none');
-		$('.off-canvas-content').css('filter','none');
-		$('.footer').css('filter','none');
-	}
-
-	function leaveGame() {
-		const urlPrefix = window.location.href.substr(0, window.location.href.indexOf('src'));
-
-		// if game is not over, remove student from session table so they can restart game
-		if (!gameIsComplete)
-			$.ajax({
-		  		url: "<?= addSession("utils/session.php") ?>",
-		  		method: 'POST',
-	  			data: { action: 'remove_student', groupId: groupId }
-	  		});
-
-  		// if its a multi game, notify opponent
-  		if (room_web_socket)
-  			room_web_socket.send("exit");
-
-  		// exit to student.php
-  		if (!gameIsComplete)
-  			window.location = urlPrefix + '<?= addSession("src/student.php?session=left") ?>';
-  		else
-  			window.location = urlPrefix + '<?= addSession("src/student.php?session=comp") ?>';
-	}
-
-	window.onbeforeunload = function () {
-	    leaveGame();
-	};
-
-
-		// CHARTS SET UP \\
-    	// ==============
     	var graphLabels = ["Yr. 1", "Yr. 2", "Yr. 3", "Yr. 4", "Yr. 5", "Yr. 6", "Yr. 7", "Yr. 8", "Yr. 9", "Yr. 10", "Yr. 11", "Yr. 12", "Yr. 13",  "Yr. 14",  "Yr. 15",  "Yr. 16", "Yr. 17",  "Yr. 18",  "Yr. 19",  "Yr. 20",  "Yr. 21",  "Yr. 22",  "Yr. 23",  "Yr. 24",  "Yr. 25"];
     	graphLabels = graphLabels.slice(0, $('#numRounds').val());
 
-    	function init(to_section) {
+    	function drawGraph(to_section) {
     		if (to_section == "income_section") {
     			var usrIncomeData = [{
 			            label: 'Your Revenue ($)',
-			            data: revenueHistory,
+			            data: myData['revenueHistory'],
 			            backgroundColor: 'rgba(0, 0, 230, 0.2)',
 			            borderColor: 'rgba(0, 0, 230, 1)',
 			            borderWidth: 1
 			        },
 			        {
 			        	label: 'Your Profit ($)',
-			            data: profitHistory,
+			            data: myData['profitHistory'],
 			            backgroundColor: 'rgba(0, 153, 255, 0.2)',
 			            borderColor: 'rgba(0, 153, 255, 1)',
 			            borderWidth: 1
 			        }];
 			    var oppIncomeData = [{
-			            label: $('#opponent').val()+'\'s Revenue ($)',
-			            data: oppRevenueHistory,
+			            label: oppName + '\'s Revenue ($)',
+			            data: opponentData['revenueHistory'],
 			            backgroundColor: 'rgba(179, 0, 0, 0.2)',
 			            borderColor: 'rgba(179, 0, 0, 1)',
 			            borderWidth: 1
 			        },
 			        {
-			        	label: $('#opponent').val()+'\'s Profit ($)',
-			            data: oppProfitHistory,
+			        	label: oppName+'\'s Profit ($)',
+			            data: opponentData['profitHistory'],
 			            backgroundColor: 'rgba(255, 128, 128, 0.2)',
 			            borderColor: 'rgba(255, 128, 128, 1)',
 			            borderWidth: 1
 			        }];
 			    var usrCumulativeData = [{
 			            label: 'Your Revenue ($)',
-			            data: cumulativeHistory,
+			            data: cumulativeSumsArr(myData['revenueHistory'] || []),
 			            backgroundColor: [
 			                'rgba(0, 0, 230, 0.2)'
 			            ],
@@ -1065,7 +1129,7 @@ if ($gameInfo['mode'] == 'multi') $startGame = false;
 			        },
 			        {
 			            label: 'Your Profit ($)',
-			            data: cumulativeProfHistory,
+			            data: cumulativeSumsArr(myData['profitHistory'] || []),
 			            backgroundColor: [
 			                'rgba(0, 153, 255, 0.2)'
 			            ],
@@ -1075,8 +1139,8 @@ if ($gameInfo['mode'] == 'multi') $startGame = false;
 			            borderWidth: 1
 			        }];
 			    var oppCumulativeData = [{
-			            label: $('#opponent').val()+'\'s Revenue ($)',
-			            data: oppCumulativeHistory,
+			            label: oppName+'\'s Revenue ($)',
+			            data: cumulativeSumsArr(opponentData['revenueHistory'] || []),
 			            backgroundColor: [
 			                'rgba(179, 0, 0, 0.2)'
 			            ],
@@ -1086,8 +1150,8 @@ if ($gameInfo['mode'] == 'multi') $startGame = false;
 			            borderWidth: 1
 			        },
 			        {
-			            label: $('#opponent').val()+'\'s Profit ($)',
-			            data: oppCumulativeProfHistory,
+			            label: oppName+'\'s Profit ($)',
+			            data: cumulativeSumsArr(opponentData['profitHistory'] || []),
 			            backgroundColor: [
 			                'rgba(255, 128, 128, 0.2)'
 			            ],
@@ -1098,19 +1162,19 @@ if ($gameInfo['mode'] == 'multi') $startGame = false;
 			        }];
 			    var usrQuantityData = {
 					label: 'Your Sales (Units)',
-					data: quantityHistory,
+					data: myData['quantityHistory'] || [],
 					backgroundColor: 'rgba(255, 165, 0, 0.2)',
 					borderColor: 'rgba(255,165,0,1)',
 					borderWidth: 1
 				};
 				var oppQuantityData = {
-					label: $('#opponent').val()+"'s Sales (Units)",
-					data: oppQuantityHistory,
+					label: oppName+"'s Sales (Units)",
+					data: opponentData['quantityHistory'] || [],
 					backgroundColor: 'rgb(255, 88, 51, 0.2)',
 					borderColor: 'rgb(255, 88, 51, 1)',
 					borderWidth: 1
 				};
-			    if ($('#mode').val() == 'single') {
+			    if (!isMultiplayer ) {
 					var displayIncomeData = {
 						labels: graphLabels,
 						datasets: usrIncomeData
@@ -1154,7 +1218,7 @@ if ($gameInfo['mode'] == 'multi') $startGame = false;
 				    data: displayIncomeData,
 				    options: chartOptions
 				});
-				new Chart(document.getElementById("cummulativeChart"), {
+				new Chart(document.getElementById("cumulativeChart"), {
 				    type: 'line',
 				    data: displayCumulativeData,
 				    options: chartOptions
@@ -1186,19 +1250,19 @@ if ($gameInfo['mode'] == 'multi') $startGame = false;
 			else if (to_section == "cost_section") {
 				var usrData = {
 					label: 'Yours Sales (Units)',
-					data: quantityHistory,
+					data: myData['quantityHistory'],
 					backgroundColor: 'rgba(255, 165, 0, 0.2)',
 					borderColor: 'rgba(255,165,0,1)',
 					borderWidth: 1
 				}
 				var oppData = {
-					label: $('#opponent').val()+"'s Sales (Units)",
-					data: oppQuantityHistory,
+					label: oppName+"'s Sales (Units)",
+					data: opponentData['quantityHistory'],
 					backgroundColor: 'rgb(255, 88, 51, 0.2)',
 					borderColor: 'rgb(255, 88, 51, 1)',
 					borderWidth: 1
 				}
-				if ($('#mode').val() == 'single')
+				if( !isMultiplayer  )
 					var displayData = {
 						labels: graphLabels,
 						datasets: [usrData]
@@ -1225,7 +1289,7 @@ if ($gameInfo['mode'] == 'multi') $startGame = false;
 				        labels: graphLabels,
 				        datasets: [{
 				            label: 'Total Cost ($)',
-				            data: ttlCostHist,
+				            data: myData['totalCostHistory'],
 				            backgroundColor: [
 				                'rgba(255, 99, 132, 0.2)'
 				            ],
@@ -1242,8 +1306,8 @@ if ($gameInfo['mode'] == 'multi') $startGame = false;
 				    data: {
 				        labels: graphLabels,
 				        datasets: [{
-				            label: 'Marginal Cost ($/Unit)',
-				            data: marginalCostHist,
+				            label: 'Average Cost ($/Unit)',
+				            data: myData['avgCostHistory'],
 				            backgroundColor: [
 				                'rgba(188, 0, 255, 0.2)'
 				            ],
@@ -1261,8 +1325,8 @@ if ($gameInfo['mode'] == 'multi') $startGame = false;
 				        labels: graphLabels,
 				        datasets: [
 				        {
-				        	label: 'Average Total Cost ($)',
-				            data: avgTtlCostHist,
+				        	label: 'Average Total Cost ($/unit)',
+				            data: myData['avgCostHistory'],
 				            backgroundColor: [
 				                'rgba(0, 99, 132, 0.2)',
 				            ],
@@ -1283,19 +1347,19 @@ if ($gameInfo['mode'] == 'multi') $startGame = false;
 			else if (to_section == "dashboard_section") {
 				var usrData = {
 					label: 'Your Sales (Units)',
-					data: quantityHistory,
+					data: myData['quantityHistory'],
 					backgroundColor: 'rgba(255, 165, 0, 0.2)',
 					borderColor: 'rgba(255,165,0,1)',
 					borderWidth: 1
 				};
 				var oppData = {
-					label: $('#opponent').val()+"'s Sales (Units)",
-					data: oppQuantityHistory,
+					label: oppName+"'s Sales (Units)",
+					data: opponentData['quantityHistory'],
 					backgroundColor: 'rgb(255, 88, 51, 0.2)',
 					borderColor: 'rgb(255, 88, 51, 1)',
 					borderWidth: 1
 				};
-				if ($('#mode').val() == 'single')
+				if( !isMultiplayer )
 					var displayData = {
 						labels: graphLabels,
 						datasets: [usrData]
@@ -1324,9 +1388,6 @@ if ($gameInfo['mode'] == 'multi') $startGame = false;
 				});
 			}
 		}
-
-		// =========================
-
     </script>
   </body>
 
@@ -1394,6 +1455,7 @@ if ($gameInfo['mode'] == 'multi') $startGame = false;
 	}
 	#progressContainer {
 		float: left;
+        float: top;
 	    width: 80%;
 	    margin: 20px 10px 0 0;
 	}
@@ -1458,6 +1520,14 @@ if ($gameInfo['mode'] == 'multi') $startGame = false;
 	table.paleBlueRows tr:nth-child(even) {
 	  background: #D0E4F5;
 	}
+
+    .progress-danger > #progressBar{
+        background-color: #fc0303;
+    }
+
+    .progress-off > #progressBar{
+        background-color: gray;
+    }
   </style>
 </html>
 

@@ -14,7 +14,6 @@ use \Tsugi\Core\LTIX;
 
 $LAUNCH = LTIX::session_start();
 
-include 'utils/sql_settup.php';
 
 if ($USER->instructor) {
 	header("Location: ".addSession('admin_page.php'));
@@ -118,7 +117,8 @@ if ($USER->instructor) {
 		    form.setAttribute("method", "post");
 		    form.setAttribute("action", "<?= addSession("utils/session.php"); ?>");
 
-		    var params = {"game_id":$("#gameIdInput").val(), "checkExistance":"yes"};
+		    var params = {	"gameId": $("#gameIdInput").val(),
+							"action" : "checkExistence"		  };
 
 		    for (var key in params) {
 	            var hiddenField = document.createElement("input");

@@ -1,1 +1,2 @@
-$(document).foundation()
+Foundation.addToJquery($);
+jQuery(document).foundation()
